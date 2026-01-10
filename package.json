@@ -19,6 +19,7 @@
         "vite": "^4.0.0"
     },
     "dependencies": {
+        "@heroicons/react": "^2.2.0",
         "lucide-react": "^0.562.0"
     }
 }

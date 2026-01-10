@@ -5,8 +5,10 @@ import SidebarPreview from "./Components/SidebarPreview";
 import Navbar from "@/Components/Shared/Navbar";
 import FlashMessage from "@/Components/Shared/FlashMessage";
 
+/* ================= DASHBOARD ================= */
+import Dashboard from "./Dashboard";
+
 /* ================= USERS MODULE ================= */
-import Index from "./Users/Index";
 import UserManagement from "./Users/Management";
 import Selection from "./Users/Selection";
 import Grouping from "./Users/Grouping";
@@ -24,9 +26,11 @@ import ModuleResultDetail from "./Modules/Results/Detail";
 
 export default function Preview() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // 🔑 DEFAULT PAGE = DASHBOARD
   const [activePageId, setActivePageId] = useState("Dashboard");
 
-  /* ========== MOCK DATA (SIMULASI BACKEND) ========== */
+  /* ========== MOCK DATA ========== */
   const mockGroups = [
     { id: 1, name: "Medical Student 2022" },
     { id: 2, name: "Medical Student 2023" },
@@ -38,11 +42,11 @@ export default function Preview() {
   /* ========== MOCK ROUTER ========== */
   const renderContent = () => {
     switch (activePageId) {
-      /* ===== USERS ===== */
+      /* ===== DASHBOARD ===== */
       case "Dashboard":
-      case "Index":
-        return <Index />;
+        return <Dashboard />;
 
+      /* ===== USERS ===== */
       case "Management":
         return <UserManagement groupList={mockGroups} />;
 
@@ -84,7 +88,7 @@ export default function Preview() {
       default:
         return (
           <div className="bg-white border rounded-xl p-10 text-center shadow-sm">
-            <h2 className="text-xl font-black text-gray-800 mb-2">
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
               Preview Page Not Mapped
             </h2>
             <p className="text-gray-500 text-sm">
@@ -92,7 +96,7 @@ export default function Preview() {
               <span className="font-mono bg-gray-100 px-2 py-1 rounded">
                 {activePageId}
               </span>{" "}
-              belum diregistrasikan di Preview.jsx
+              belum diregistrasikan
             </p>
           </div>
         );
@@ -112,20 +116,21 @@ export default function Preview() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar
-          pageTitle={`CBT / Preview / ${activePageId}`}
+          pageTitle={`CBT / Admin / ${activePageId}`}
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-8 border-4 border-yellow-400 border-dashed">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-8">
           {/* INFO PREVIEW */}
           <div className="bg-yellow-100 text-yellow-800 p-2 mb-4 text-xs font-bold rounded text-center">
-            PREVIEW MODE — Semua halaman berjalan statis tanpa backend (Mock
-            Router Active)
+            PREVIEW MODE — Semua halaman berjalan statis (Mock Router)
           </div>
 
           <FlashMessage />
 
-          <div className="max-w-7xl mx-auto">{renderContent()}</div>
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>

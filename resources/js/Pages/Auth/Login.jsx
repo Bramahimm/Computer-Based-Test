@@ -1,78 +1,99 @@
-import React from 'react';
-import { useForm, Head } from '@inertiajs/react';
-import Button from '@/Components/UI/Button';
-import Input from '@/Components/UI/Input';
+import React from 'react'
+import { Head, useForm } from '@inertiajs/react'
+import { UserIcon, LockClosedIcon } from '@heroicons/react/24/solid'
+import Input from '@/Components/UI/Input'
+import Button from '@/Components/UI/Button'
 
 export default function Login() {
     const { data, setData, post, processing, errors } = useForm({
-        username: '',
+        email: '',
         password: '',
-        rememberMe: false,
-    });
+        remember: false,
+    })
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        post(route('login'));
-    };
+    const submit = (e) => {
+        e.preventDefault()
+        post(route('login'))
+    }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-white p-4">
-            <Head title="Login CBT EXAM" />
-            <div className="w-full max-w-md text-center">
-                <img src="/images/logo-unila.png" alt="UNILA" className="mx-auto w-24 mb-4" />
-                <h1 className="text-2xl font-bold text-gray-800">CBT EXAM</h1>
-                <p className="text-gray-500 text-sm mb-8">Fakultas Kedokteran Universitas Lampung</p>
+        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-slate-100 to-slate-200 font-sans">
+            <Head title="Login CBT FK Unila" />
 
-                <form onSubmit={handleLogin} className="space-y-4 text-left">
-                    <Input 
-                        label="User"
-                        value={data.username}
-                        onChange={e => setData('username', e.target.value)}
-                        error={errors.username}
-                        placeholder="Username"
-                        icon="UserIcon"
-                    />
-                    <Input 
-                        label="Password"
-                        type="password"
-                        value={data.password}
-                        onChange={e => setData('password', e.target.value)}
-                        error={errors.password}
-                        placeholder="Enter Password"
-                        icon="LockIcon"
-                    />
-                    
-                    <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                checked={data.rememberMe}
-                                onChange={e => setData('rememberMe', e.target.checked)}
-                                className="rounded border-gray-300 text-green-600" 
-                            />
-                            <span>Remember Me</span>
-                        </label>
-                        <a href="#" className="text-blue-600">Forgot Password?</a>
+            {/* ================= LEFT ================= */}
+            <div className="relative hidden lg:flex items-center justify-center overflow-hidden">
+                <img
+                    src="/images/fk.jpg"
+                    alt="Fakultas Kedokteran Unila"
+                    className="absolute inset-0 w-full h-full object-cover scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/90 via-emerald-800/80 to-slate-900/90" />
+
+                <div className="relative z-10 max-w-xl px-16 text-white">
+                    <h1 className="text-5xl font-semibold leading-tight">
+                        Computer<br />Based Test
+                    </h1>
+                    <div className="mt-5 h-1.5 w-24 bg-emerald-400 rounded-full" />
+                    <p className="mt-6 text-emerald-100">
+                        Platform ujian terkomputerisasi Fakultas Kedokteran
+                        Universitas Lampung
+                    </p>
+                </div>
+            </div>
+
+            {/* ================= RIGHT ================= */}
+            <div className="flex items-center justify-center px-6">
+                <div className="w-full max-w-md rounded-3xl bg-white/80 backdrop-blur-xl border shadow-xl">
+                    <div className="px-10 pt-10 text-center">
+                        <img src="/images/logo.png" className="mx-auto w-20 mb-4" />
+                        <h2 className="text-2xl font-semibold text-slate-800">
+                            Login CBT
+                        </h2>
+                        <p className="text-sm text-slate-500">
+                            Fakultas Kedokteran Universitas Lampung
+                        </p>
                     </div>
 
-                    <Button 
-                        type="submit" 
-                        isLoading={processing} 
-                        className="w-full bg-[#00a65a] hover:bg-[#008d4c] py-3"
-                    >
-                        Login
-                    </Button>
-                </form>
+                    <form onSubmit={submit} className="px-10 py-8 space-y-6">
+                        <Input
+                            label="Email"
+                            icon={UserIcon}
+                            value={data.email}
+                            onChange={e => setData('email', e.target.value)}
+                            error={errors.email}
+                            placeholder="admin@fk.unila.ac.id"
+                        />
 
-                <div className="mt-8 text-sm">
-                    <p className="text-gray-500">Or don't have an account yet?</p>
-                    <a href="#" className="text-blue-600 font-semibold underline">Create my account</a>
+                        <Input
+                            label="Password"
+                            type="password"
+                            icon={LockClosedIcon}
+                            value={data.password}
+                            onChange={e => setData('password', e.target.value)}
+                            error={errors.password}
+                            placeholder="Masukkan password"
+                        />
+
+                        <label className="flex items-center gap-2 text-sm text-slate-600">
+                            <input
+                                type="checkbox"
+                                checked={data.remember}
+                                onChange={e => setData('remember', e.target.checked)}
+                                className="rounded border-slate-300 text-emerald-600"
+                            />
+                            Remember me
+                        </label>
+
+                        <Button
+                            type="submit"
+                            isLoading={processing}
+                            className="w-full py-3 text-white rounded-xl bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            Masuk
+                        </Button>
+                    </form>
                 </div>
-                
-                <footer className="mt-12 text-blue-600 text-xs">
-                    <a href="#">Terms and Conditions</a>
-                </footer>
             </div>
         </div>
-    );
+    )
 }

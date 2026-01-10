@@ -32,10 +32,14 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
-        // 🔒 Redirect berdasarkan role
-        return auth()->user()->role === 'admin'
-            ? redirect()->route('admin.dashboard')
-            : redirect()->route('peserta.dashboard');
+        $user = auth()->user();
+
+        // 🔒 Redirect aman untuk Inertia
+        if ($user->role === 'admin') {
+            return Inertia::location(route('admin.dashboard'));
+        }
+
+        return Inertia::location(route('peserta.dashboard'));
     }
 
     /**
