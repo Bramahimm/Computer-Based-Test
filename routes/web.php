@@ -10,39 +10,28 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/login', [AuthenticatedSessionController::class, 'create'])
-    ->middleware('guest')
-    ->name('login');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])
+        ->name('login');
 
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])
-    ->middleware('guest');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+});
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
 
-
 /*
 |--------------------------------------------------------------------------
-| ROOT REDIRECT (SMART)
+| ROOT (SMART REDIRECT – ANTI LOOP)
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
     if (!auth()->check()) {
-        return redirect()->route('login');
+        return Inertia::location(route('login'));
     }
 
     return auth()->user()->role === 'admin'
-        ? redirect()->route('admin.dashboard')
-        : redirect()->route('peserta.dashboard');
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| UI PREVIEW (DEV ONLY)
-|--------------------------------------------------------------------------
-*/
-Route::get('/preview', function () {
-    return Inertia::render('Admin/Preview');
+        ? Inertia::location(route('admin.dashboard'))
+        : Inertia::location(route('peserta.dashboard'));
 });

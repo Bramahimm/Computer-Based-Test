@@ -13,10 +13,13 @@ class DashboardController extends Controller
     public function index()
     {
         return inertia('Admin/Dashboard', [
-            'totalUsers' => User::where('role', 'peserta')->count(),
-            'totalTests' => Test::count(),
-            'ongoingTests' => TestUser::where('status', 'ongoing')->count(),
-            'validatedResults' => Result::where('status', 'validated')->count(),
+            'stats' => [
+                'totalUsers'   => User::where('role', 'peserta')->count(),
+                'totalTests'   => Test::count(),
+                'activeTests'  => Test::where('is_active', true)->count(),
+                'ongoingTests' => TestUser::where('status', 'ongoing')->count(),
+            ],
+            'latestTests' => Test::latest()->limit(5)->get(['id', 'title', 'start_time', 'end_time']),
         ]);
     }
 }

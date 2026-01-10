@@ -16,7 +16,7 @@ export default function AdminLayout({ children, title }) {
       <Head title={title} />
     
       {/* Sidebar Component */}
-      {/* <Sidebar isVisible={isSidebarOpen} onToggle={toggleSidebar} /> */}
+      <Sidebar isVisible={isSidebarOpen} onToggle={toggleSidebar} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar pageTitle={title} onMenuClick={toggleSidebar} />
