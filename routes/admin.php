@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\{
     ImportUserController,
     ImportQuestionController,
     UserController,
+    GroupController
 };
 
 Route::middleware([
@@ -31,6 +32,7 @@ Route::middleware([
     Route::resource('topics', TopicController::class);
     Route::resource('questions', QuestionController::class);
     Route::resource('tests', TestController::class);
+    Route::resource('groups', GroupController::class);
 
     // Import
     Route::post('/import/users', [ImportUserController::class, 'store'])
