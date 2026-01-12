@@ -4,35 +4,78 @@ import Button from "@/Components/UI/Button";
 
 export default function Management({ users, onAddClick, onEditClick, flash }) {
   return (
-    <div className="space-y-4 text-left">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Header Section */}
+      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Manajemen Mahasiswa
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {users.length} mahasiswa terdaftar dalam sistem
+            </p>
+          </div>
+          <Button 
+            onClick={onAddClick} 
+            className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 text-sm transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Mahasiswa
+          </Button>
+        </div>
+      </div>
+
+      {/* Flash Message */}
       {flash?.success && (
-        <div className="p-4 bg-green-100 text-green-700 rounded-xl font-bold text-sm">
-          {flash.success}
+        <div className="px-6 py-3 bg-green-50 border-b border-green-200 text-green-700 flex items-center gap-3">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-medium">{flash.success}</span>
         </div>
       )}
 
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-black text-gray-800 uppercase">
-          Manajemen Mahasiswa
-        </h2>
-        <Button onClick={onAddClick} className="bg-[#00a65a]">
-          Tambah Mahasiswa
-        </Button>
+      {/* Data Table */}
+      <div className="p-6">
+        <Table
+          columns={[
+            { 
+              label: "NPM", 
+              key: "npm",
+              className: "font-mono text-sm"
+            },
+            { 
+              label: "Nama", 
+              key: "name",
+              className: "font-semibold"
+            },
+            {
+              label: "Grup",
+              key: "groups",
+              render: (g) => g && g.length > 0 
+                ? g.map((i) => i.name).join(", ") 
+                : <span className="text-gray-400 italic">-</span>,
+            },
+          ]}
+          data={users}
+          emptyMessage={
+            <div className="py-12 text-center">
+              <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 font-medium">Belum ada mahasiswa terdaftar</p>
+              <p className="text-sm text-gray-400 mt-1">Mulai dengan menambahkan mahasiswa pertama Anda</p>
+            </div>
+          }
+          onRowClick={onEditClick}
+          className="cursor-pointer hover:bg-gray-50 transition-colors"
+        />
       </div>
-
-      <Table
-        columns={[
-          { label: "NPM", key: "npm" },
-          { label: "Nama", key: "name" },
-          {
-            label: "Groups",
-            key: "groups",
-            render: (g) => g.map((i) => i.name).join(", ") || "-",
-          },
-        ]}
-        data={users}
-        onRowClick={onEditClick}
-      />
     </div>
   );
 }

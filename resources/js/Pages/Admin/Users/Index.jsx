@@ -5,26 +5,30 @@ import Modal from "@/Components/UI/Modal";
 import Button from "@/Components/UI/Button";
 import UserForm from "@/Features/UserManagement/Components/UserForm";
 
+// Import Sub-views
 import Management from "./Management";
 import Grouping from "./Grouping";
-import Online from "./Online"; 
+import Online from "./Online";
 import Selection from "./Selection";
-import Import from "./Import"; 
-import Results from "./Results"; 
+import Import from "./Import";
+import Results from "./Results";
 
-export default function Index({ users, groups }) {
+export default function Index({ users = [], groups = [] }) {
   const { url, props } = usePage();
+  // Mengambil flash secara eksplisit dari props
   const { flash } = props;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
+  // Resolver Section berdasarkan query parameter ?section=
   const section = useMemo(() => {
     const params = new URLSearchParams(url.split("?")[1]);
     return params.get("section") || "management";
   }, [url]);
 
+  // Form Hook untuk Management User
   const { data, setData, post, put, processing, errors, reset, clearErrors } =
     useForm({
       name: "",
@@ -54,48 +58,49 @@ export default function Index({ users, groups }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const options = {
+      onSuccess: () => {
+        setIsModalOpen(false);
+        reset();
+      },
+      preserveScroll: true,
+    };
+
     if (editMode) {
-      put(route("admin.users.update", selectedId), {
-        onSuccess: () => setIsModalOpen(false),
-      });
+      put(route("admin.users.update", selectedId), options);
     } else {
-      post(route("admin.users.store"), {
-        onSuccess: () => {
-          setIsModalOpen(false);
-          reset();
-        },
-      });
+      post(route("admin.users.store"), options);
     }
   };
 
   const renderSection = () => {
+    // Shared props yang akan diteruskan ke sub-views
+    const commonProps = { users, groups, flash };
+
     switch (section) {
       case "management":
         return (
           <Management
-            users={users}
-            groups={groups}
-            flash={flash}
+            {...commonProps}
             onAddClick={() => openModal()}
             onEditClick={(user) => openModal(user)}
           />
         );
       case "groups":
-        return <Grouping groups={groups} />;
+        // Menambahkan flash agar notifikasi GroupController tampil
+        return <Grouping groups={groups} flash={flash} />;
       case "selection":
-        return <Selection users={users} groups={groups} />;
+        return <Selection {...commonProps} />;
       case "online":
         return <Online users={users} />;
       case "import":
-        return <Import />;
+        return <Import flash={flash} />;
       case "results":
         return <Results users={users} />;
       default:
         return (
           <Management
-            users={users}
-            groups={groups}
-            flash={flash}
+            {...commonProps}
             onAddClick={() => openModal()}
             onEditClick={(user) => openModal(user)}
           />
@@ -105,37 +110,45 @@ export default function Index({ users, groups }) {
 
   return (
     <AdminLayout>
-      <Head title={`Users - ${section.toUpperCase()}`} />
+      <Head title={`Manajemen Pengguna - ${section.charAt(0).toUpperCase() + section.slice(1)}`} />
 
       <div className="space-y-6">
-        <div className="flex gap-4 border-b border-gray-200 text-sm font-bold uppercase tracking-widest text-gray-400">
-        </div>
-
-        <div key={section} className="animate-in fade-in duration-500">
+        {/* Render Sub-view aktif berdasarkan key section untuk reset animasi */}
+        <div key={section} className="transition-all duration-300 ease-in-out">
           {renderSection()}
         </div>
       </div>
 
+      {/* Modal CRUD User (Hanya untuk section Management/Selection) */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editMode ? "Edit Peserta" : "Tambah Peserta"}>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        title={editMode ? "Edit Pengguna" : "Tambah Pengguna Baru"}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <UserForm
             data={data}
             setData={setData}
             errors={errors}
             groups={groups}
           />
-          <div className="flex justify-end gap-3 pt-6 border-t mt-4">
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsModalOpen(false)}>
+              onClick={() => setIsModalOpen(false)}
+              className="px-3 py-1.5 text-sm font-medium"
+            >
               Batal
             </Button>
-            <Button type="submit" loading={processing} className="bg-[#00a65a]">
-              Simpan
+            <Button
+              type="submit"
+              loading={processing}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 text-sm font-medium transition-colors"
+            >
+              {editMode ? "Perbarui" : "Simpan"}
             </Button>
           </div>
         </form>
