@@ -2,15 +2,17 @@
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
 import { UserIcon, LockClosedIcon } from '@heroicons/react/24/solid'
+
 import Input from '@/Components/UI/Input'
 import Button from '@/Components/UI/Button'
 
 export default function Login() {
     const { data, setData, post, processing, errors } = useForm({
-        email: '',
-        password: '',
-        remember: false,
-    })
+    login: '',
+    password: '',
+    remember: false,
+})
+
 
     const submit = (e) => {
         e.preventDefault()
@@ -45,7 +47,11 @@ export default function Login() {
             <div className="flex items-center justify-center px-6">
                 <div className="w-full max-w-md rounded-3xl bg-white/80 backdrop-blur-xl border shadow-xl">
                     <div className="px-10 pt-10 text-center">
-                        <img src="/images/logo.png" className="mx-auto w-20 mb-4" />
+                        <img
+                            src="/images/logo.png"
+                            alt="Universitas Lampung"
+                            className="mx-auto w-20 mb-4"
+                        />
                         <h2 className="text-2xl font-semibold text-slate-800">
                             Login CBT
                         </h2>
@@ -56,12 +62,11 @@ export default function Login() {
 
                     <form onSubmit={submit} className="px-10 py-8 space-y-6">
                         <Input
-                            label="Email"
-                            icon={UserIcon}
-                            value={data.email}
-                            onChange={e => setData('email', e.target.value)}
-                            error={errors.email}
-                            placeholder="admin@fk.unila.ac.id"
+                            label="Email / NPM"
+                            value={data.login}
+                            onChange={e => setData('login', e.target.value)}
+                            error={errors.login}
+                            placeholder="Email atau NPM"
                         />
 
                         <Input
