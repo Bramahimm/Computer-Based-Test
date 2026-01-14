@@ -10,7 +10,6 @@ export default function Modal({
   preventClose = false,
   loading = false,
 }) {
-  // Handle ESC Key
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape" && !preventClose && !loading) onClose();

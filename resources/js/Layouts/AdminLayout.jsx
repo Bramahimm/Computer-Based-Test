@@ -14,7 +14,7 @@ export default function AdminLayout({ children, title }) {
   return (
     <div className="min-h-screen bg-gray-100 flex">
       <Head title={title} />
-
+    
       {/* Sidebar Component */}
       <Sidebar isVisible={isSidebarOpen} onToggle={toggleSidebar} />
 
@@ -32,4 +32,4 @@ export default function AdminLayout({ children, title }) {
       </div>
     </div>
   );
-}
+}     

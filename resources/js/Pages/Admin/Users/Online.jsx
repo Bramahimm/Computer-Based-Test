@@ -1,58 +1,166 @@
-import React from "react";
-import AdminLayout from "@/Layouts/AdminLayout";
+import React, { useState, useEffect } from "react";
+import { router } from "@inertiajs/react";
 import Table from "@/Components/UI/Table";
+import Button from "@/Components/UI/Button";
 
-export default function Online({ onlineUsers = [] }) {
+// --- SUB-KOMPONEN KECIL ---
+
+const OnlineStats = ({ count }) => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <StatCard label="Pengguna Online" value={count} color="blue" icon="bolt" />
+    <StatCard
+      label="Update Otomatis"
+      value="30s"
+      color="purple"
+      icon="schedule"
+    />
+    <StatCard
+      label="Status Sistem"
+      value="Stabil"
+      color="green"
+      icon="check_circle"
+    />
+  </div>
+);
+
+const StatCard = ({ label, value, color, icon }) => (
+  <div className={`bg-${color}-50 border border-${color}-100 rounded-lg p-4`}>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className={`text-sm font-medium text-${color}-600`}>{label}</p>
+        <p className={`text-2xl font-bold text-${color}-900 mt-1`}>{value}</p>
+      </div>
+      <span className={`material-icons text-${color}-400 text-3xl`}>
+        {icon}
+      </span>
+    </div>
+  </div>
+);
+
+const UserInfo = ({ name, lastActivity }) => (
+  <div className="flex items-center gap-3">
+    <div className="relative">
+      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+        <span className="material-icons text-green-600 text-sm">person</span>
+      </div>
+      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+    </div>
+    <div>
+      <div className="font-medium text-gray-900">{name}</div>
+      <div className="text-[10px] text-gray-500 uppercase font-bold tracking-tight">
+        Aktif: {lastActivity || "Baru saja"}
+      </div>
+    </div>
+  </div>
+);
+
+// --- KOMPONEN UTAMA ---
+
+export default function Online({ users = [] }) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => handleManualRefresh(), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    router.reload({
+      only: ["users"],
+      onFinish: () => setIsRefreshing(false),
+      preserveScroll: true,
+    });
+  };
+
+  const handleForceLogout = (userId) => {
+    if (confirm("Keluarkan user ini secara paksa?")) {
+      router.post(
+        route("admin.users.force-logout", userId),
+        {},
+        {
+          onSuccess: () => alert("User berhasil dikeluarkan."),
+        }
+      );
+    }
+  };
+
   const columns = [
     {
-      label: "User",
-      key: "username",
-      render: (val) => (
-        <div className="flex items-center gap-2 text-blue-700 font-bold">
-          <span className="material-icons text-xs text-green-500 animate-pulse">
-            circle
-          </span>
-          {val}
-        </div>
+      label: "Pengguna",
+      key: "name",
+      render: (val, row) => (
+        <UserInfo name={val} lastActivity={row.last_activity} />
       ),
     },
-    { label: "Status", key: "status" },
     {
-      label: "Address (IP)",
+      label: "NPM",
+      key: "npm",
+      render: (val) => (
+        <span className="font-mono text-sm text-gray-600 font-bold">{val}</span>
+      ),
+    },
+    {
+      label: "Alamat IP",
       key: "ip_address",
       render: (val) => (
-        <code className="bg-gray-100 px-2 py-1 rounded text-[10px]">{val}</code>
+        <code className="font-mono text-[11px] bg-gray-50 px-2 py-1 rounded border border-gray-200 text-gray-500">
+          {val || "127.0.0.1"}
+        </code>
       ),
     },
   ];
 
   return (
-    <AdminLayout title="/Users/UserOnline">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-            <span className="material-icons text-3xl">record_voice_over</span>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden text-left">
+      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-blue-600 rounded-lg text-white">
+            <span className="material-icons text-xl">sensors</span>
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 tracking-tight text-left">
-            Users
-          </h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 uppercase tracking-tighter">
+              Status Online
+            </h1>
+            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+              Real-time Monitoring
+            </p>
+          </div>
         </div>
+        <Button
+          onClick={handleManualRefresh}
+          loading={isRefreshing}
+          className="bg-blue-600 text-xs">
+          Muat Ulang Data
+        </Button>
+      </div>
 
-        <div className="p-8">
-          <h2 className="text-green-600 font-bold mb-4">Online Users</h2>
+      <div className="p-8">
+        <OnlineStats count={users.length} />
 
+        <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-inner">
           <Table
             columns={columns}
-            data={onlineUsers}
-            emptyMessage="No users currently online"
+            data={users}
+            emptyMessage="Tidak ada pengguna yang online."
+            renderActions={(user) => (
+              <button
+                onClick={() => handleForceLogout(user.id)}
+                className="text-red-600 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-black uppercase transition-all">
+                Logout Paksa
+              </button>
+            )}
           />
+        </div>
 
-          <div className="mt-8 bg-blue-50 border border-blue-200 p-3 rounded text-sm text-blue-700 italic">
-            This form displays users who are currently logged in. Data is
-            simulated for UI preview.
-          </div>
+        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
+          <span className="material-icons text-amber-500">warning</span>
+          <p className="text-xs text-amber-800 font-medium italic">
+            Fitur Logout Paksa memutus sesi secara instan. Gunakan dengan bijak
+            untuk menjaga integritas ujian.
+          </p>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 }

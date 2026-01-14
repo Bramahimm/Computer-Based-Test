@@ -11,7 +11,9 @@ use App\Http\Controllers\Admin\{
     MonitoringController,
     ForceSubmitController,
     ImportUserController,
-    ImportQuestionController
+    ImportQuestionController,
+    UserController,
+    GroupController
 };
 
 Route::middleware([
@@ -23,12 +25,14 @@ Route::middleware([
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('dashboard');
+    Route::resource('users', UserController::class);
 
     // Master Data
     Route::resource('modules', ModuleController::class);
     Route::resource('topics', TopicController::class);
     Route::resource('questions', QuestionController::class);
     Route::resource('tests', TestController::class);
+    Route::resource('groups', GroupController::class);
 
     // Import
     Route::post('/import/users', [ImportUserController::class, 'store'])

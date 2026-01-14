@@ -45,7 +45,7 @@ export default function Import() {
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-800">
-              Drop files to import
+              Impor Soal!
             </h2>
             <p className="text-sm text-gray-500">
               Supports structured .csv or .xml files based on TCExam standards.

@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
 import { UserIcon, LockClosedIcon } from '@heroicons/react/24/solid'
@@ -21,7 +22,6 @@ export default function Login() {
     return (
         <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-slate-100 to-slate-200 font-sans">
             <Head title="Login CBT FK Unila" />
-
             {/* ================= LEFT ================= */}
             <div className="relative hidden lg:flex items-center justify-center overflow-hidden">
                 <img

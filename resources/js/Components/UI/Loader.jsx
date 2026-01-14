@@ -16,7 +16,7 @@ export default function Loader({
 
   if (type === "skeleton") {
     return (
-      <div className="animate-pulse space-y-4 w-full">
+      <div className="animate-pulse space-y-4 w-full"> 
         <div className="h-10 bg-gray-200 rounded w-full"></div>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (

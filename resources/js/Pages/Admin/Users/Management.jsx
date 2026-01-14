@@ -1,167 +1,81 @@
-import React, { useState } from "react";
-import AdminLayout from "@/Layouts/AdminLayout";
-import Button from "@/Components/UI/Button";
+import React from "react";
 import Table from "@/Components/UI/Table";
-import Modal from "@/Components/UI/Modal";
-import Loader from "@/Components/UI/Loader";
+import Button from "@/Components/UI/Button";
 
-export default function UserManagement({ userList = [], groupList = [] }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-
-  // Definisi Kolom untuk Table
-  const columns = [
-    { label: "User", key: "username" },
-    { label: "Reg. Number", key: "reg_no" },
-    { label: "First Name", key: "firstName" },
-    { label: "Last Name", key: "lastName" },
-    { label: "Group", key: "group" },
-  ];
-
-  const handleOpenModal = (user = null) => {
-    setSelectedUser(user);
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulasi proses simpan
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsModalOpen(false);
-    }, 1500);
-  };
-
+export default function Management({ users, onAddClick, onEditClick, flash }) {
   return (
-    <AdminLayout title="/Users/UserManagement">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {/* Header Section */}
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-              <span className="material-icons">groups</span>
-            </div>
-            <h1 className="text-4xl font-bold text-gray-800 tracking-tight text-left">
-              Users
-            </h1>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Header Section */}
+      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Manajemen Mahasiswa
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {users.length} mahasiswa terdaftar dalam sistem
+            </p>
           </div>
-          <Button onClick={() => handleOpenModal()} className="bg-[#00a65a]">
-            + Add New User
+          <Button 
+            onClick={onAddClick} 
+            className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 text-sm transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Mahasiswa
           </Button>
-        </div>
-
-        <div className="p-8">
-          <h2 className="text-green-600 font-bold mb-4">Users Management</h2>
-
-          {/* Table sebagai View Utama */}
-          <Table
-            columns={columns}
-            data={userList}
-            onRowClick={(row) => handleOpenModal(row)}
-            emptyMessage="No users found."
-          />
-
-          <div className="mt-8 bg-blue-50 border border-blue-200 p-3 rounded text-sm text-blue-700 text-left">
-            Pada formulir ini Anda dapat mengelola berbagai pengguna. Klik pada
-            baris tabel untuk mengubah data.
-          </div>
         </div>
       </div>
 
-      {/* Modal untuk Isolasi Form */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedUser ? "Update User" : "Add New User"}
-        size="lg"
-        loading={isLoading}>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white border-2 border-green-500 rounded-xl relative">
-            {/* Left Column */}
-            <div className="space-y-4">
-              <InputField
-                label="User"
-                isRequired
-                defaultValue={selectedUser?.username}
-              />
-              <InputField label="Address" isRequired />
-              <InputField
-                label="Password"
-                type="password"
-                isRequired={!selectedUser}
-              />
-              <InputField
-                label="Confirm Password"
-                type="password"
-                isRequired={!selectedUser}
-              />
-              <InputField label="Registration Date" type="date" />
-              <InputField label="IP" placeholder="000.000.000.000" />
-            </div>
+      {/* Flash Message */}
+      {flash?.success && (
+        <div className="px-6 py-3 bg-green-50 border-b border-green-200 text-green-700 flex items-center gap-3">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-medium">{flash.success}</span>
+        </div>
+      )}
 
-            {/* Right Column */}
-            <div className="space-y-4">
-              <InputField
-                label="Reg. Number"
-                isRequired
-                defaultValue={selectedUser?.reg_no}
-              />
-              <InputField
-                label="First Name"
-                isRequired
-                defaultValue={selectedUser?.firstName}
-              />
-              <InputField
-                label="Last Name"
-                isRequired
-                defaultValue={selectedUser?.lastName}
-              />
-              <InputField label="Birth Date" type="date" isRequired />
-              <InputField label="Birth Place" isRequired />
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-bold text-green-700">
-                  Group
-                </label>
-                <select
-                  className="border border-gray-300 rounded p-2 h-32 outline-none focus:ring-2 focus:ring-green-500"
-                  multiple>
-                  {groupList.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
+      {/* Data Table */}
+      <div className="p-6">
+        <Table
+          columns={[
+            { 
+              label: "NPM", 
+              key: "npm",
+              className: "font-mono text-sm"
+            },
+            { 
+              label: "Nama", 
+              key: "name",
+              className: "font-semibold"
+            },
+            {
+              label: "Grup",
+              key: "groups",
+              render: (g) => g && g.length > 0 
+                ? g.map((i) => i.name).join(", ") 
+                : <span className="text-gray-400 italic">-</span>,
+            },
+          ]}
+          data={users}
+          emptyMessage={
+            <div className="py-12 text-center">
+              <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
               </div>
+              <p className="text-gray-500 font-medium">Belum ada mahasiswa terdaftar</p>
+              <p className="text-sm text-gray-400 mt-1">Mulai dengan menambahkan mahasiswa pertama Anda</p>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-[#00a65a] px-10">
-              {selectedUser ? "Update" : "Add"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-    </AdminLayout>
+          }
+          onRowClick={onEditClick}
+          className="cursor-pointer hover:bg-gray-50 transition-colors"
+        />
+      </div>
+    </div>
   );
 }
-
-const InputField = ({ label, isRequired, ...props }) => (
-  <div className="grid grid-cols-3 items-center gap-4 text-left">
-    <label className="text-sm font-bold text-green-700 leading-tight">
-      {label} {isRequired && <span className="text-red-500">*</span>}
-    </label>
-    <input
-      {...props}
-      className="col-span-2 border border-gray-300 rounded p-1.5 focus:ring-2 focus:ring-green-500 outline-none text-sm"
-    />
-  </div>
-);

@@ -23,6 +23,7 @@ class UserController extends Controller
         return inertia('Admin/Users/Create', [
             'groups' => Group::all(),
         ]);
+
     }
 
     public function store(Request $request)

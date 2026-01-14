@@ -45,4 +45,5 @@ class Test extends Model
     {
         return $this->hasMany(TestUser::class);
     }
+    
 }

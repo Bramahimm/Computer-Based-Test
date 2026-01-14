@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+:root {
+  --sidebar-bg: linear-gradient(180deg, #047857 0%, #022C22 100%);
+  --sidebar-text: #A7F3D0;
+  --sidebar-active-item: rgba(255, 255, 255, 0.1);
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-active-border: #34D399;
+  --sidebar-border: #34D39980;
+}
+
+[data-theme="luxuryNature"] {
+  --sidebar-bg: linear-gradient(180deg, #047857 0%, #022C22 100%);
+  --sidebar-text: #A7F3D0;
+  --sidebar-active-item: rgba(255, 255, 255, 0.1);
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-active-border: #34D399;
+  --sidebar-border: #34D39980;
+}
+
+[data-theme="darkGreen"] {
+  --sidebar-bg: #020617;
+  --sidebar-text: #ffffff;
+  --sidebar-active-item: #064E3B;
+  --sidebar-active-text: #34D399;
+  --sidebar-active-border: #34D399;
+  --sidebar-border: #34D39980;
+}

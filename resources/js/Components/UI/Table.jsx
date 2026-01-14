@@ -42,7 +42,7 @@ export default function Table({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-6 py-4 font-black text-gray-600 uppercase tracking-tighter">
+                  className="px-6 py-4 font-black text-gray-700 uppercase tracking-tighter">
                   {col.label}
                 </th>
               ))}
