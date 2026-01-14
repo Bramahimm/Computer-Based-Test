@@ -1,9 +1,8 @@
 import React from "react";
-import AdminLayout from "@/Layouts/AdminLayout";
 
 export default function Results() {
   return (
-    <AdminLayout title="Modules - Analysis & Results">
+    <>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Avg Score", val: "78.2", color: "blue" },
@@ -13,7 +12,8 @@ export default function Results() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white p-4 rounded-lg border shadow-sm">
+            className="bg-white p-4 rounded-lg border shadow-sm"
+          >
             <p className="text-[10px] uppercase font-black text-gray-400">
               {stat.label}
             </p>
@@ -33,6 +33,7 @@ export default function Results() {
             Export Analysis (PDF)
           </button>
         </div>
+
         <div className="p-20 text-center space-y-4">
           <span className="material-icons text-6xl text-gray-200">
             query_stats
@@ -43,6 +44,6 @@ export default function Results() {
           </p>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }

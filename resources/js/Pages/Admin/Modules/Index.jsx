@@ -1,8 +1,9 @@
 import React, { useMemo } from "react";
 import { Head, usePage } from "@inertiajs/react";
+import AdminLayout from "@/Layouts/AdminLayout";
 
 /**
- * Semua file dalam folder Modules
+ * Sub pages
  */
 import ClassPage from "./Class";
 import Questions from "./Questions";
@@ -13,10 +14,6 @@ import ImportPage from "./Import";
 export default function Index({ modules }) {
   const { url } = usePage();
 
-  /**
-   * Ambil section dari query string
-   * default: class
-   */
   const section = useMemo(() => {
     const params = new URLSearchParams(url.split("?")[1]);
     return params.get("section") || "class";
@@ -45,14 +42,14 @@ export default function Index({ modules }) {
   };
 
   return (
-    <>
-      <Head title={`Modules - ${section}`} />
+    <AdminLayout title={`Modules - ${section}`}>
+      <Head title="Modules" />
 
       <div className="space-y-6">
         <div key={section} className="animate-in fade-in duration-300">
           {renderSection()}
         </div>
       </div>
-    </>
+    </AdminLayout>
   );
 }
