@@ -43,7 +43,7 @@ export default function Modal({
             `}>
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50/50">
-          <h3 className="text-lg font-black text-gray-800 uppercase tracking-tight">
+          <h3 className="text-lg font-semibold text-gray-800 uppercase tracking-tight">
             {title}
           </h3>
           {!preventClose && (

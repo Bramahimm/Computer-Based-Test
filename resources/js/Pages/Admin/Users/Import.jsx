@@ -25,19 +25,8 @@ export default function Import() {
   return (
     // HAPUS pembungkus AdminLayout
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden text-left">
-      <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-        <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-          <span className="material-icons text-3xl">campaign</span>
-        </div>
-        <h1 className="text-4xl font-bold text-gray-800 tracking-tight">
-          Users
-        </h1>
-      </div>
-
       <div className="p-8">
-        <h2 className="text-green-600 font-bold mb-4 uppercase">
-          User Importer
-        </h2>
+        <h2 className="text-lg font-bold mb-4">Import Mahasiswa</h2>
 
         <div className="max-w-4xl mx-auto border border-gray-300 rounded-lg p-10 bg-gray-50/50">
           <form onSubmit={submitImport} className="text-center space-y-4">
@@ -67,9 +56,9 @@ export default function Import() {
                     </span>
                   ) : (
                     <>
-                      Drag or Drop file
+                      Tarik atau seret
                       <br />
-                      CSV or XML
+                      CSV atau XML
                     </>
                   )}
                 </p>
@@ -100,8 +89,9 @@ export default function Import() {
         </div>
 
         <div className="mt-8 bg-blue-50 border border-blue-200 p-3 rounded text-sm text-blue-700 italic">
-          With this form you can import to register users from an XML or CSV
-          file. Make sure the file follows the required template.
+          Dengan formulir ini Anda dapat mengimpor pengguna terdaftar dari file
+          XML atau CSV. Pastikan file tersebut mengikuti templat yang
+          dibutuhkan..
         </div>
       </div>
     </div>

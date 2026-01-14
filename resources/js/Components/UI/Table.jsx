@@ -42,12 +42,12 @@ export default function Table({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-6 py-4 font-black text-gray-700 uppercase tracking-tighter">
+                  className="px-6 py-4 text-gray-700">
                   {col.label}
                 </th>
               ))}
               {renderActions && (
-                <th className="px-6 py-4 text-right uppercase tracking-tighter font-black text-gray-600">
+                <th className="px-6 py-4 text-right font-bold text-gray-600">
                   Aksi
                 </th>
               )}

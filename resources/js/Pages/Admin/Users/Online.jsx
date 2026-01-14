@@ -9,8 +9,8 @@ const OnlineStats = ({ count }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
     <StatCard label="Pengguna Online" value={count} color="blue" icon="bolt" />
     <StatCard
-      label="Update Otomatis"
-      value="30s"
+      label="Update Otomatis dalam"
+      value="30dtk"
       color="purple"
       icon="schedule"
     />
@@ -115,14 +115,14 @@ export default function Online({ users = [] }) {
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden text-left">
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-blue-600 rounded-lg text-white">
-            <span className="material-icons text-xl">sensors</span>
+          <div className="p-2.5">
+            <span className="material-icons">sensors</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 uppercase tracking-tighter">
+            <h1 className="text-xl font-semibold text-gray-900">
               Status Online
             </h1>
-            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+            <p className="text-[11px] text-gray-500 font-semibold">
               Real-time Monitoring
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function Online({ users = [] }) {
             renderActions={(user) => (
               <button
                 onClick={() => handleForceLogout(user.id)}
-                className="text-red-600 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-black uppercase transition-all">
+                className="text-red-600 hover:bg-red-50 px-3 py-1 rounded-lg text-xs transition-all">
                 Logout Paksa
               </button>
             )}
