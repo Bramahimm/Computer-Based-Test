@@ -53,13 +53,42 @@ export const SideBarItems = [
       },
     ],
   },
+
   {
     name: "Modules",
     icon: Package,
     route: "admin.modules.index",
     subMenus: [
-      { name: "Daftar Modul", id: "Class", route: "admin.modules.index" },
-      { name: "Tambah Modul", id: "Create", route: "admin.modules.create" },
+      {
+        name: "Class",
+        id: "Class",
+        route: "admin.modules.index",
+        params: { section: "class" },
+      },
+      {
+        name: "Questions",
+        id: "Questions",
+        route: "admin.modules.index",
+        params: { section: "questions" },
+      },
+      {
+        name: "Subjects",
+        id: "Subjects",
+        route: "admin.modules.index",
+        params: { section: "subjects" },
+      },
+      {
+        name: "Results",
+        id: "Results",
+        route: "admin.modules.index",
+        params: { section: "results" },
+      },
+      {
+        name: "Import",
+        id: "Import",
+        route: "admin.modules.index",
+        params: { section: "import" },
+      },
     ],
   },
   {
