@@ -8,12 +8,12 @@ export default function Input({
     error, 
     placeholder, 
     icon: Icon, 
-    isRequired = false 
+    isRequired = false,
 }) {
     return (
         <div className="flex flex-col gap-1.5 w-full">
             {label && (
-                <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                <label className="text-sm font-bold text-black flex items-center gap-1">
                     {label} 
                     {isRequired && <span className="text-red-500" title="Required">*</span>}
                 </label>

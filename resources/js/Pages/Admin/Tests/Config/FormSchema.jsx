@@ -9,6 +9,7 @@ export const initialForm = {
   is_active: 1,
   groups: [],
   topics: [],
+  module_id: "",
 };
 
 export const transformForEdit = (test) => ({
