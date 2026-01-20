@@ -10,7 +10,7 @@ export default function Management({
   tests = [],
   groups = [],
   topics = [],
-  flash,
+  modules = [],
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -33,7 +33,13 @@ export default function Management({
     description: data.description || "",
     end_time: data.end_time ? data.end_time.replace("T", " ") : null,
     groups: Array.isArray(data.groups) ? data.groups : [],
-    topics: Array.isArray(data.topics) ? data.topics : [],
+    topics: Array.isArray(data.topics) 
+    ? data.topics.map(id => ({
+        id: id,
+        total_questions: 10,
+        question_type: 'mixed'
+      })) 
+    : [],
   }));
 
   const openModal = (test = null) => {
@@ -87,11 +93,6 @@ export default function Management({
       </div>
 
       <div className="p-8">
-        {flash?.success && (
-          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 font-bold text-xs uppercase tracking-widest animate-pulse">
-            {flash.success}
-          </div>
-        )}
         <TestTable
           tests={tests}
           onEdit={openModal}
@@ -113,8 +114,9 @@ export default function Management({
             errors={errors}
             groups={groups}
             topics={topics}
+            modules={modules}
           />
-          <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+          <div className="flex justify-end gap-3 pt-6 border-t mt-32">
             <Button
               type="button"
               variant="outline"

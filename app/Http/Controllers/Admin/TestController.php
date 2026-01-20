@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreTestRequest;
 use App\Http\Requests\Admin\UpdateTestRequest;
 use App\Models\Test;
 use App\Models\Group;
+use App\Models\Module;
 use App\Models\Topic;
 
 class TestController extends Controller
@@ -16,7 +17,7 @@ public function index()
 {
     return inertia('Admin/Tests/Index', [
         'tests' => Test::with('groups', 'topics')->latest()->get(),
-        
+        'modules' => Module::where('is_active', true) -> get(),
         'groups' => Group::all(),
         'topics' => Topic::with('module')
             ->where('is_active', true)

@@ -11,7 +11,6 @@ export default function BehaviorTab({ data, setData }) {
   return (
     <div className="space-y-6 text-left">
       <h4 className="text-[11px] font-bold text-gray-400">
-        Perilaku Ujian (UI Only)
       </h4>
 
       <div className="grid grid-cols-1 gap-4">
@@ -19,7 +18,7 @@ export default function BehaviorTab({ data, setData }) {
           <div
             key={item.key}
             className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <span className="text-xs font-bold text-gray-700 uppercase tracking-tighter">
+            <span className="text-[12px] font-bold text-gray-700">
               {item.label}
             </span>
             <button
@@ -39,8 +38,8 @@ export default function BehaviorTab({ data, setData }) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-          Authorized IP (Optional)
+        <label className="text-[13px] font-bold">
+          IP yang diizinkan
         </label>
         <input
           type="text"
