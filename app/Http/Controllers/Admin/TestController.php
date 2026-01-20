@@ -12,12 +12,17 @@ use App\Models\Topic;
 class TestController extends Controller
 {
     /* ================= INDEX ================= */
-    public function index()
-    {
-        return inertia('Admin/Tests/Index', [
-            'tests' => Test::with('groups')->latest()->get(),
-        ]);
-    }
+public function index()
+{
+    return inertia('Admin/Tests/Index', [
+        'tests' => Test::with('groups', 'topics')->latest()->get(),
+        
+        'groups' => Group::all(),
+        'topics' => Topic::with('module')
+            ->where('is_active', true)
+            ->get(),
+    ]);
+}
 
     /* ================= CREATE ================= */
     public function create()

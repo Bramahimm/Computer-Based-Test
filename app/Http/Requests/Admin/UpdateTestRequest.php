@@ -30,4 +30,12 @@ class UpdateTestRequest extends FormRequest
             'topics.*.question_type' => 'nullable|string',
         ];
     }
+    public function messages(): array
+    {
+        return [
+            'end_time.after' => 'Waktu selesai harus sesudah waktu mulai.',
+            'groups.required' => 'Pilih minimal satu angkatan/grup.',
+            'topics.required' => 'Pilih minimal satu topik ujian.',
+        ];
+    }
 }

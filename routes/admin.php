@@ -35,14 +35,26 @@ Route::middleware([
     Route::resource('groups', GroupController::class);
 
     // Import
+    Route::get('/users/import', [ImportUserController::class, 'create'])
+        ->name('users.import.view');
+
     Route::post('/import/users', [ImportUserController::class, 'store'])
         ->name('import.users');
 
     Route::get('/users/import/template', [ImportUserController::class, 'downloadTemplate'])
         ->name('import.template');
 
+    // 1. Route untuk Melihat Halaman Import (UI)
+    Route::get('/questions/import', [ImportQuestionController::class, 'create'])
+        ->name('questions.import.view');
+
+    // 2. Route untuk Proses Upload (POST)
     Route::post('/import/questions', [ImportQuestionController::class, 'store'])
         ->name('import.questions');
+
+    // 3. Route untuk Download Template Soal
+    Route::get('/questions/import/template', [ImportQuestionController::class, 'downloadTemplate'])
+        ->name('questions.import.template');
 
     // Result & Validation
     Route::get('/results', [ResultController::class, 'index'])

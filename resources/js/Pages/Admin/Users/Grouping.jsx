@@ -10,21 +10,21 @@ import Input from "@/Components/UI/Input";
 const GroupHeader = ({ onAdd, count }) => (
   <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
     <div className="flex items-center gap-4">
-      <div className="p-2.5 bg-blue-50 rounded-lg text-blue-600">
-        <span className="material-icons">groups</span>
+      <div className="p-2.5">
+        <span className="material-icons">workspaces</span>
       </div>
       <div>
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight uppercase">
+        <h1 className="text-xl font-semibold text-gray-900">
           Manajemen Grup
         </h1>
-        <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+        <p className="text-[11px] text-gray-500 font-semibold">
           {count} Grup Terdaftar
         </p>
       </div>
     </div>
     <Button
       onClick={onAdd}
-      className="bg-green-600 hover:bg-green-700 flex items-center gap-2 text-xs">
+      className="bg-green-600 font-semibold hover:bg-green-700 flex items-center gap-1 text-xs">
       <span className="material-icons text-sm">add</span> Tambah Grup
     </Button>
   </div>

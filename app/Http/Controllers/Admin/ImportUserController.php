@@ -16,7 +16,6 @@ class ImportUserController extends Controller
         $file = $request->file('file');
         $extension = $file->getClientOriginalExtension();
 
-        // Variabel untuk menampung laporan
         $skippedData = [];
         $successCount = 0;
 
@@ -24,29 +23,26 @@ class ImportUserController extends Controller
         try {
             if ($extension === 'xml') {
                 // --- HANDLER XML ---
-                // Kita panggil method lokal, tapi return-nya array [sukses, skipped]
                 $result = $this->importXml($file);
                 $skippedData = $result['skipped'];
                 $successCount = $result['count'];
             } else {
                 // --- HANDLER EXCEL/CSV ---
-                // Kita instansiasi dulu class import-nya
                 $importer = new UsersImport;
                 Excel::import($importer, $file);
 
-                // Ambil data dari properti class yang sudah kita buat
                 $skippedData = $importer->skipped;
                 $successCount = $importer->importedCount;
             }
 
             DB::commit();
 
-            // --- MENYUSUN PESAN ALERT ---
+            // --- SKENARIO 1: ADA DATA YANG DILEWATI (WARNING) ---
             if (count($skippedData) > 0) {
-                // Jika ada yang duplikat/skip
                 $message = "Import Selesai. $successCount berhasil.";
                 $message .= " Namun " . count($skippedData) . " data dilewati karena duplikat: ";
-                // Ambil 3 contoh nama pertama agar alert tidak kepanjangan
+
+                // Ambil 3 contoh nama pertama
                 $examples = array_slice($skippedData, 0, 3);
                 $message .= implode(", ", $examples);
 
@@ -54,12 +50,13 @@ class ImportUserController extends Controller
                     $message .= ", dan lainnya.";
                 }
 
-                // Gunakan 'warning' atau 'error' tergantung preferensi
+                // Redirect Back dengan pesan Warning
                 return redirect()->back()->with('warning', $message);
             }
 
-            // Jika sukses semua tanpa skip
-            // return redirect()->back()->with('success', "Berhasil mengimport $successCount user peserta baru.");
+            // --- SKENARIO 2: BERHASIL SEMUA (SUCCESS) ---
+            // 🔥 PASTIKAN BARIS INI TIDAK DI-KOMENTAR
+            return redirect()->back()->with('success', "Berhasil mengimport $successCount user peserta baru.");
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Import Error: " . $e->getMessage());
@@ -67,9 +64,6 @@ class ImportUserController extends Controller
         }
     }
 
-    /**
-     * Parsing XML Manual (Updated return array)
-     */
     private function importXml($file)
     {
         $skipped = [];
@@ -86,7 +80,6 @@ class ImportUserController extends Controller
                     'groupName' => trim((string) $row->group),
                 ];
 
-                // Panggil logic simpan static & cek statusnya
                 $res = UsersImport::saveUser($data);
 
                 if ($res['status'] === 'skipped') {
@@ -96,13 +89,12 @@ class ImportUserController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            throw $e; // Lempar ke catch utama di store()
+            throw $e;
         }
 
         return ['count' => $count, 'skipped' => $skipped];
     }
 
-    // ... method downloadTemplate tetap sama ...
     public function downloadTemplate()
     {
         $headers = [
@@ -113,6 +105,8 @@ class ImportUserController extends Controller
             "Expires"             => "0"
         ];
         $columns = ['Name', 'NPM', 'Email', 'Group'];
+
+        // Contoh data template
         $example = ['Putra.dev', '2317051098', 'Putra@gmail.com', 'Angkatan 2023'];
 
         $callback = function () use ($columns, $example) {

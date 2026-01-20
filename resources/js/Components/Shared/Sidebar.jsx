@@ -16,9 +16,9 @@ export default function Sidebar({
   useEffect(() => {
     const activeParents = {};
     SideBarItems.forEach((item) => {
-      // Logic deteksi active parent yang lebih fleksibel
+      const subMenus = item.subMenus || item.submenus;
       if (
-        item.subMenus &&
+        subMenus &&
         url.includes(item.route.replace(".index", "").replace(/\./g, "/"))
       ) {
         activeParents[item.name] = true;
@@ -34,17 +34,18 @@ export default function Sidebar({
   return (
     <>
       {isVisible && (
-        <div
-          className="fixed inset-0 bg-black/60 z-[40] lg:hidden backdrop-blur-sm transition-opacity duration-300"
-          onClick={onToggle}
-        />
+        <div className="fixed inset-0 z-[40] lg:hidden" onClick={onToggle} />
       )}
 
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-[50] w-64 transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed lg:static inset-y-0 left-0 z-[50] w-64 h-screen overflow-hidden transition-transform duration-300 ease-in-out flex flex-col scrollbar-stable shrink-0 ${
           isVisible ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
-        style={{ background: currentPalette.sidebar }}>
+        style={{
+          background: currentPalette.sidebar,
+          scrollbarGutter: "stable",
+        }}>
+        {/* Header - shrink-0 agar area logo tidak terkompresi */}
         <div className="p-6 shrink-0">
           <div className="flex items-center gap-3">
             <div
@@ -86,12 +87,13 @@ export default function Sidebar({
               }
             };
 
-            // Deteksi Active State: Cek apakah route utama aktif
             const isActive = hasRoute(item.route)
               ? route().current(item.route + "*")
               : false;
+
             const isExpanded = expandedItems[item.name] || false;
-            const hasSubMenus = item.subMenus && item.subMenus.length > 0;
+            const subMenus = item.subMenus || item.submenus;
+            const hasSubMenus = subMenus && subMenus.length > 0;
             const Icon = item.icon;
 
             return (
@@ -110,7 +112,9 @@ export default function Sidebar({
                     }}>
                     <div className="flex items-center gap-3">
                       <Icon className="w-5 h-5" />
-                      <span className="text-sm md:text-base">{item.name}</span>
+                      <span className="text-sm md:text-base font-medium">
+                        {item.name}
+                      </span>
                     </div>
                     <ChevronDown
                       className={`w-4 h-4 transition-transform ${
@@ -131,7 +135,9 @@ export default function Sidebar({
                         : currentPalette.sidebarText,
                     }}>
                     <Icon className="w-5 h-5" />
-                    <span className="text-sm md:text-base">{item.name}</span>
+                    <span className="text-sm md:text-base font-medium">
+                      {item.name}
+                    </span>
                   </Link>
                 )}
 
@@ -145,22 +151,17 @@ export default function Sidebar({
                     <div
                       className="ml-9 mt-1 mb-2 space-y-1 pl-4 border-l-2"
                       style={{ borderColor: `${currentPalette.activeItem}50` }}>
-                      {item.subMenus.map((submenu) => {
+                      {subMenus.map((submenu) => {
                         const subRouteExists = hasRoute(submenu.route);
-                        if (!subRouteExists) {
-                          console.error(
-                            `Rute ${submenu.route} tidak ditemukan oleh Ziggy!`
-                          );
-                        }
                         const isSubActive =
                           subRouteExists &&
                           (submenu.params
                             ? route().current(submenu.route, submenu.params)
-                          : route().current(submenu.route));
+                            : route().current(submenu.route));
 
                         return (
                           <Link
-                            key={submenu.id}
+                            key={submenu.id || submenu.name}
                             href={
                               subRouteExists
                                 ? route(submenu.route, submenu.params || {})
@@ -172,8 +173,8 @@ export default function Sidebar({
                             style={{
                               color: isSubActive
                                 ? currentPalette.activeText
-                                : currentPalette.sidebarText + "99",
-                              fontWeight: isSubActive ? "bold" : "normal",
+                                : currentPalette.sidebarText + "cc",
+                              fontWeight: isSubActive ? "600" : "400",
                             }}>
                             {submenu.name}
                           </Link>
@@ -186,14 +187,15 @@ export default function Sidebar({
             );
           })}
 
+          {/* Logout Section tetap di dalam nav agar ikut ter-scroll jika layar sangat pendek */}
           <div
             className="pt-4 pb-8 mt-4"
-            style={{ borderTop: `1px solid ${currentPalette.activeItem}50` }}>
+            style={{ borderTop: `1px solid ${currentPalette.activeItem}30` }}>
             <Link
               href={route("logout")}
               method="post"
               as="button"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500 transition-all w-full text-left group"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 transition-all w-full text-left group"
               style={{ color: currentPalette.sidebarText + "99" }}>
               <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               <span className="text-sm md:text-base">Exit System</span>

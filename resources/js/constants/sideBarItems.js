@@ -46,10 +46,10 @@ export const SideBarItems = [
         params: { section: "import" },
       },
       {
-        name: "Results",
-        id: "Results",
+        name: "Hasil Individu",
+        id: "Individual",
         route: "admin.users.index",
-        params: { section: "results" },
+        params: { section: "individual" },
       },
     ],
   },

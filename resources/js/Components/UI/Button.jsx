@@ -10,7 +10,7 @@ export default function Button({
   className = "",
 }) {
   const baseStyles =
-    "font-bold rounded-lg transition-all flex items-center justify-center gap-2 py-2 px-4 text-sm md:text-base active:scale-95 disabled:active:scale-100";
+    "font-semibold rounded-lg transition-all flex items-center justify-center gap-1 py-2 px-[0.7rem] text-sm md:text-base active:scale-95 disabled:active:scale-100";
 
   const variants = {
     primary: "bg-[#00a65a] hover:bg-[#008d4c] text-white shadow-sm",

@@ -5,7 +5,6 @@ export default function Index() {
     const { flash } = usePage().props;
 
     useEffect(() => {
-        // Kirim flash message tersebut sebagai state saat pindah halaman
         router.visit(route('admin.users.index', { section: 'groups' }), {
             replace: true,
         });

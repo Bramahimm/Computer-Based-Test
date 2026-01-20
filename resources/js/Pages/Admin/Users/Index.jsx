@@ -95,7 +95,7 @@ export default function Index({ users = [], groups = [] }) {
         return <Online users={users} />;
       case "import":
         return <Import flash={flash} />;
-      case "results":
+      case "individual":
         return <Results users={users} />;
       default:
         return (

@@ -12,24 +12,25 @@ export default function AdminLayout({ children, title }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="h-screen w-full bg-gray-100 flex overflow-hidden">
       <Head title={title} />
     
-      {/* Sidebar Component */}
       <Sidebar isVisible={isSidebarOpen} onToggle={toggleSidebar} />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Navbar pageTitle={title} onMenuClick={toggleSidebar} />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 custom-scrollbar">
           <FlashMessage />
-          <div className="max-w-7xl mx-auto">{children}</div>
+          <div className="max-w-7xl mx-auto min-h-full">
+            {children}
+          </div>
+          
+          <footer className="py-8 text-center text-xs text-blue-600/60 border-t mt-12">
+            CBT Ilmu Komputer - Fakultas Kedokteran
+          </footer>
         </main>
-
-        <footer className="bg-white py-4 text-center text-xs text-blue-600 border-t">
-          CBT Ilmu Komputer - Fakultas Kedokteran
-        </footer>
       </div>
     </div>
   );
-}     
+}

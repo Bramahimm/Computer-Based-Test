@@ -13,7 +13,8 @@ import {
     DocumentDuplicateIcon
 } from "@heroicons/react/24/outline";
 
-// 🔥 IMPORT COMPONENT ALERT DARI FOLDER COMPONENTS
+// 🔥 Import Component Alert yang baru dibuat
+// Sesuaikan path import ini dengan struktur folder Anda
 import ImportAlert from "@/Pages/Admin/Components/ImportAlert";
 
 export default function Import() {
@@ -21,10 +22,8 @@ export default function Import() {
     file: null,
   });
 
-  // Ambil flash message dari Inertia (dikirim dari Controller)
-const { flash } = usePage().props;
-
-  console.log("Flash Message Server:", flash);
+  // Ambil flash message dari server
+  const { flash } = usePage().props;
 
   const handleFileUpload = (e) => {
     setData("file", e.target.files[0]);
@@ -36,7 +35,7 @@ const { flash } = usePage().props;
       forceFormData: true,
       onSuccess: () => {
           reset();
-          // Reset manual input file browser agar nama file hilang dari tampilan input native
+          // Reset input file browser secara manual
           const fileInput = document.getElementById('file-upload');
           if(fileInput) fileInput.value = null;
       },
@@ -65,7 +64,6 @@ const { flash } = usePage().props;
           </p>
         </div>
 
-        {/* Tombol Download Template */}
         <a
           href={route("admin.import.template")}
           className="inline-flex items-center justify-center gap-2 bg-gray-800 text-white hover:bg-gray-700 border border-transparent px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md group"
@@ -76,12 +74,12 @@ const { flash } = usePage().props;
       </div>
 
       {/* --- ALERT COMPONENT --- */}
-      {/* Kita panggil component ImportAlert disini */}
+      {/* Cukup panggil satu baris ini */}
       <ImportAlert flash={flash} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* --- KOLOM KIRI: FORM UPLOAD (UI LANGSUNG DISINI) --- */}
+        {/* --- KOLOM KIRI: FORM UPLOAD --- */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
@@ -113,7 +111,6 @@ const { flash } = usePage().props;
 
                     <div className="p-10 flex flex-col items-center justify-center text-center">
                       {data.file ? (
-                        // TAMPILAN SAAT FILE DIPILIH
                         <div className="animate-fade-in-up">
                           <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
                             <DocumentTextIcon className="w-8 h-8" />
@@ -133,7 +130,6 @@ const { flash } = usePage().props;
                           </p>
                         </div>
                       ) : (
-                        // TAMPILAN DEFAULT (KOSONG)
                         <div>
                           <div className="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:bg-blue-100 group-hover:text-blue-500 transition-colors duration-200">
                             <CloudArrowUpIcon className="w-8 h-8" />
@@ -149,7 +145,6 @@ const { flash } = usePage().props;
                     </div>
                   </div>
 
-                  {/* ERROR VALIDASI INPUT FILE */}
                   {errors.file && (
                     <div className="mt-3 flex items-start gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm border border-red-100">
                       <ExclamationCircleIcon className="w-5 h-5 shrink-0" />
@@ -219,7 +214,7 @@ const { flash } = usePage().props;
                   <div className="mt-0.5 w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold border border-blue-100">3</div>
                   <div>
                     <strong className="block text-gray-900 text-xs uppercase mb-0.5 tracking-wide">Duplikasi</strong>
-                    Jika User sudah ada tapi belum masuk Grup, sistem akan menambahkannya ke Grup tersebut secara otomatis.
+                    Jika User sudah ada, sistem akan memasukkannya ke Grup baru (jika belum masuk).
                   </div>
                 </li>
               </ul>

@@ -7,19 +7,19 @@ import Table from "@/Components/UI/Table";
 
 const SelectionHeader = () => (
   <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center gap-4 text-left">
-    <div className="p-2.5 bg-blue-600 rounded-lg text-white">
-      <span className="material-icons text-xl">person_search</span>
+    <div className="p-2.5">
+      <span className="material-icons">person_search</span>
     </div>
     <div>
-      <h1 className="text-xl font-bold text-gray-900 uppercase tracking-tighter">Seleksi Pengguna</h1>
-      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Manajemen Aksi Massal & Batching</p>
+      <h1 className="text-xl font-semibold text-gray-900">Seleksi Pengguna</h1>
+      <p className="text-[11px] text-gray-500 font-semibold">Manajemen Aksi Massal & Batching</p>
     </div>
   </div>
 );
 
 const BatchInstruction = () => (
   <div className="space-y-3 bg-gray-50 p-6 rounded-xl border border-gray-200 text-left">
-    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Panduan Penggunaan</h3>
+    <h3 className="text-[12px] font-bold text-gray-400 mb-2">Panduan Penggunaan</h3>
     {[
       "Gunakan filter grup untuk menyaring daftar mahasiswa.",
       "Centang mahasiswa yang ingin diproses secara massal.",
@@ -104,9 +104,9 @@ export default function Selection({ users = [], groups = [] }) {
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 flex flex-col md:flex-row items-center gap-4">
           <div className="flex items-center gap-2 shrink-0">
             <span className="material-icons text-blue-600">filter_alt</span>
-            <span className="text-xs font-black text-blue-800 uppercase tracking-widest">Filter Grup:</span>
+            <span className="text-xs font-bold text-blue-800">Filter Grup:</span>
           </div>
-          <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} className="flex-1 border border-blue-200 bg-white text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+          <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} className="flex-1 border cursor-pointer border-blue-200 bg-white text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
             <option value="">Tampilkan Semua Pengguna</option>
             {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
@@ -129,8 +129,8 @@ export default function Selection({ users = [], groups = [] }) {
                 {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
               <div className="flex gap-2">
-                <Button onClick={handleBatchAssign} disabled={!targetGroup || selectedUsers.length === 0} className="bg-green-600 text-[10px] uppercase font-bold px-6">Pindahkan</Button>
-                <Button onClick={handleBatchDelete} disabled={selectedUsers.length === 0} variant="danger" className="text-[10px] uppercase font-bold px-6">Delete</Button>
+                <Button onClick={handleBatchAssign} disabled={!targetGroup || selectedUsers.length === 0} className="bg-green-600 text-[10px] font-semibold px-6">Pindahkan</Button>
+                <Button onClick={handleBatchDelete} disabled={selectedUsers.length === 0} variant="danger" className="text-[10px] font-semibold px-6">Delete</Button>
               </div>
             </div>
           </div>
