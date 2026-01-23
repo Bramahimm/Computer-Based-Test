@@ -73,7 +73,7 @@ export default function Subjects({ modules, topics }) {
    * DELETE
    * ===================== */
   const destroy = (id) => {
-    if (!confirm("Delete this subject? All related questions will be lost.")) {
+    if (!confirm("Yakin ingin menghapus Topic ini? Semua Questions dalam Topic ini akan hilang.")) {
       return;
     }
 
@@ -119,7 +119,7 @@ export default function Subjects({ modules, topics }) {
             onClick={() => setShowModal(true)}
           >
             <PlusIcon className="w-4 h-4" />
-            Add Subject
+            Tambah Topic
           </Button>
         </div>
 
@@ -127,7 +127,7 @@ export default function Subjects({ modules, topics }) {
         <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           {filteredTopics.length === 0 && (
             <p className="text-sm text-gray-400 italic">
-              No subjects for this class
+              Tidak ada Topic pada Modul ini
             </p>
           )}
 
@@ -167,7 +167,7 @@ export default function Subjects({ modules, topics }) {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">
-                {editingTopic ? "Edit Subject" : "Add Subject"}
+                {editingTopic ? "Edit Topic" : "Tambah Topic"}
               </h2>
               <button type="button" onClick={resetModal}>
                 <XMarkIcon className="w-5 h-5" />
@@ -176,7 +176,7 @@ export default function Subjects({ modules, topics }) {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-semibold">Subject Name</label>
+                <label className="text-sm font-semibold">Nama Topic</label>
                 <input
                   required
                   className="w-full border rounded px-3 py-2"
@@ -188,7 +188,7 @@ export default function Subjects({ modules, topics }) {
               </div>
 
               <div>
-                <label className="text-sm font-semibold">Description</label>
+                <label className="text-sm font-semibold">Deskripsi</label>
                 <textarea
                   className="w-full border rounded px-3 py-2"
                   value={form.description}
@@ -205,10 +205,10 @@ export default function Subjects({ modules, topics }) {
                 variant="outline"
                 onClick={resetModal}
               >
-                Cancel
+                Batal
               </Button>
               <Button type="submit" className="bg-green-600">
-                {editingTopic ? "Update Subject" : "Save Subject"}
+                {editingTopic ? "Update" : "Simpan"}
               </Button>
             </div>
           </form>

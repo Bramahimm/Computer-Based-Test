@@ -3,24 +3,26 @@ import React from 'react';
 export default function Navigation({ questions, current, answers, onJump }) {
     return (
         <div>
-            {/* LAYOUT FLEX:
-               - flex-wrap: Tombol otomatis turun ke bawah jika mentok kanan
-               - gap-2: Jarak antar tombol
-               - justify-start: Rata kiri
-            */}
             <div className="flex flex-wrap gap-2 justify-start">
                 {questions.map((question, index) => {
                     const isActive = current === index;
                     
-                    // Cek apakah ID soal ini ada di daftar jawaban
-                    const isAnswered = answers[question.id] !== undefined;
+                    // Ambil data jawaban untuk soal ini
+                    const userAnswer = answers[question.id];
+
+                    // 🔥 FIX LOGIKA DI SINI:
+                    // 1. Cek apakah objek userAnswer ada
+                    // 2. DAN Cek apakah answerId TIDAK null (untuk PG)
+                    // 3. ATAU Cek apakah answerText TIDAK null (untuk Essay)
+                    const isAnswered = userAnswer && (
+                        userAnswer.answerId !== null || 
+                        (userAnswer.answerText && userAnswer.answerText !== "")
+                    );
 
                     return (
                         <button
                             key={question.id}
                             onClick={() => onJump(index)}
-                            // 🔥 FIX: 'flex-none' agar ukuran tidak berubah/gepeng
-                            // 'w-9 h-9' ukuran fix kotak
                             className={`
                                 flex-none w-9 h-9 flex items-center justify-center rounded-lg text-xs font-bold transition-all duration-200 border relative
                                 ${isActive 
@@ -33,7 +35,7 @@ export default function Navigation({ questions, current, answers, onJump }) {
                         >
                             {index + 1}
                             
-                            {/* Indikator titik kecil (Opsional) */}
+                            {/* Indikator titik kecil (Hanya muncul jika aktif TAPI belum dijawab) */}
                             {isActive && !isAnswered && (
                                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-400 rounded-full border-2 border-white"></span>
                             )}

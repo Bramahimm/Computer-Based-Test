@@ -25,36 +25,40 @@ Route::middleware([
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('dashboard');
-    Route::resource('users', UserController::class);
 
-    // Master Data
+    // =========================================================
+    // 🔥 ROUTE IMPORT (WAJIB DITARUH PALING ATAS) 🔥
+    // =========================================================
+
+    // 1. Import Users
+    Route::get('/users/import', [ImportUserController::class, 'create'])->name('users.import.view');
+    Route::post('/import/users', [ImportUserController::class, 'store'])->name('import.users');
+    Route::get('/users/import/template', [ImportUserController::class, 'downloadTemplate'])->name('import.template');
+
+    // 2. Import Questions (PINDAHKAN KE SINI - SEBELUM RESOURCE)
+    Route::get('/questions/import', [ImportQuestionController::class, 'create'])->name('questions.import.view');
+    Route::post('/import/questions', [ImportQuestionController::class, 'store'])->name('import.questions');
+    Route::get('/questions/import/template', [ImportQuestionController::class, 'downloadTemplate'])->name('questions.import.template');
+
+
+    // =========================================================
+    // ROUTE RESOURCE (DITARUH DI BAWAHNYA)
+    // =========================================================
+
+    Route::resource('users', UserController::class);
     Route::resource('modules', ModuleController::class);
     Route::resource('topics', TopicController::class);
+
+    // Route resource questions AMAN ditaruh di sini karena route import sudah didefinisikan duluan di atas
     Route::resource('questions', QuestionController::class);
+
     Route::resource('tests', TestController::class);
     Route::resource('groups', GroupController::class);
 
-    // Import
-    Route::get('/users/import', [ImportUserController::class, 'create'])
-        ->name('users.import.view');
 
-    Route::post('/import/users', [ImportUserController::class, 'store'])
-        ->name('import.users');
-
-    Route::get('/users/import/template', [ImportUserController::class, 'downloadTemplate'])
-        ->name('import.template');
-
-    // 1. Route untuk Melihat Halaman Import (UI)
-    Route::get('/questions/import', [ImportQuestionController::class, 'create'])
-        ->name('questions.import.view');
-
-    // 2. Route untuk Proses Upload (POST)
-    Route::post('/import/questions', [ImportQuestionController::class, 'store'])
-        ->name('import.questions');
-
-    // 3. Route untuk Download Template Soal
-    Route::get('/questions/import/template', [ImportQuestionController::class, 'downloadTemplate'])
-        ->name('questions.import.template');
+    // =========================================================
+    // HASIL & MONITORING
+    // =========================================================
 
     // Result & Validation
     Route::get('/results', [ResultController::class, 'index'])

@@ -67,10 +67,10 @@ export default function Class({ modules }) {
             <AcademicCapIcon className="w-7 h-7 text-emerald-600" />
             <div>
               <h2 className="text-xl font-bold text-gray-800">
-                Academic Classes
+                Manajemen Modul
               </h2>
               <p className="text-sm text-gray-500">
-                Manage academic class modules
+                Halaman Manajemen Akademik Fakultas Kedokteran
               </p>
             </div>
           </div>
@@ -80,7 +80,7 @@ export default function Class({ modules }) {
             className="bg-emerald-600 flex items-center gap-2"
           >
             <PlusIcon className="w-5 h-5" />
-            Add Class
+            Tambahkan Modul
           </Button>
         </div>
 
@@ -89,9 +89,9 @@ export default function Class({ modules }) {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
               <tr>
-                <th className="px-6 py-4 text-left">Class Name</th>
-                <th className="px-6 py-4 text-left">Description</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-left">Nama Modul</th>
+                <th className="px-6 py-4 text-left">Deskripsi</th>
+                <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
 
@@ -102,7 +102,7 @@ export default function Class({ modules }) {
                     colSpan="3"
                     className="px-6 py-10 text-center text-gray-400"
                   >
-                    No classes found
+                    Tidak ada modul yang ditemukan
                   </td>
                 </tr>
               ) : (
@@ -146,12 +146,12 @@ export default function Class({ modules }) {
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title={editId ? "Edit Class" : "Add Class"}
+        title={editId ? "Edit Modul" : "Tambah Modul"}
       >
         <form onSubmit={submit} className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Class Name
+              Nama Modul
             </label>
             <input
               type="text"
@@ -164,7 +164,7 @@ export default function Class({ modules }) {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Description
+              Deskripsi
             </label>
             <textarea
               rows="3"
@@ -180,7 +180,7 @@ export default function Class({ modules }) {
               variant="outline"
               onClick={() => setIsOpen(false)}
             >
-              Cancel
+              Batal
             </Button>
 
             <Button
@@ -188,7 +188,7 @@ export default function Class({ modules }) {
               loading={processing}
               className="bg-emerald-600"
             >
-              {editId ? "Update" : "Save"}
+              {editId ? "Update" : "Simpan"}
             </Button>
           </div>
         </form>

@@ -12,7 +12,7 @@ class TestSeeder extends Seeder
     public function run(): void
     {
         $test = Test::create([
-            'title' => 'Try Out AKT 2025',
+            'title' => 'Try Out AKT 2026',
             'duration' => 30,
             'start_time' => now()->subMinutes(5),
             'end_time' => now()->addHours(2),

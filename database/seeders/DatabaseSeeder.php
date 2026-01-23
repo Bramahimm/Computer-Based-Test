@@ -16,8 +16,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ModuleSeeder::class,
             TopicSeeder::class,
-            QuestionSeeder::class,
-            TestSeeder::class,
+            // QuestionSeeder::class,
+            // TestSeeder::class,
+             MassQuestionSeeder::class,
+            // NewTestSeeder::class,
+
         ]);
     }
 }

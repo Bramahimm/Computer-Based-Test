@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('question_image')->nullable();
 
             // Skor per soal (opsional, default 1)
-            $table->integer('score')->nullable();
+            $table->unsignedInteger('score')->default(1);
 
             $table->boolean('is_active')->default(true);
 

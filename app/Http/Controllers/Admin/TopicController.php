@@ -40,7 +40,9 @@ class TopicController extends Controller
             'is_active' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Subject added');
+        return redirect()
+            ->route('admin.modules.index', ['section' => 'subjects'])
+            ->with('success', 'Subject added');
     }
 
     public function show(Topic $topic)
@@ -67,22 +69,25 @@ class TopicController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $topic->update($request->only(
-            'module_id',
-            'name',
-            'description',
-            'is_active'
-        ));
+        $topic->update([
+            'module_id' => $request->module_id,
+            'name' => $request->name,
+            'description' => $request->description,
+            'is_active' => $request->is_active ?? true,
+        ]);
 
-        return redirect()->route('admin.topics.index')
-            ->with('success', 'Topik berhasil diperbarui');
+        return redirect()
+            ->route('admin.modules.index', ['section' => 'subjects'])
+            ->with('success', 'Subject Updated');
     }
+
 
     public function destroy(Topic $topic)
     {
         $topic->delete();
 
-        return redirect()->route('admin.topics.index')
-            ->with('success', 'Topik berhasil dihapus');
+        return redirect()
+            ->route('admin.modules.index', ['section' => 'subjects'])
+            ->with('success', 'Subject deleted');
     }
 }

@@ -55,11 +55,11 @@ class QuestionGeneratorService
             'started_at' => now(),
         ];
 
-        // Simpan ke cache (bisa Redis / file)
+        // Simpan ke cache (6 jam cukup untuk durasi ujian terpanjang)
         Cache::put(
             $cacheKey,
             $payload,
-            now()->addHours(6) // cukup untuk ujian
+            now()->addHours(6)
         );
 
         return $payload;
@@ -72,48 +72,45 @@ class QuestionGeneratorService
     {
         $session = self::generate($test, $userId);
 
-        return Question::with(['answers' => function ($q) use ($test) {
+        $test->load('topics');
 
-            $q->whereNotNull('answer_text');
-        }])->whereIn('id', $session['question_ids'])
-            ->get()
-            ->map(function ($question) use ($test) {
+        $questions = Question::with(['answers' => function ($q) {
+            $q->whereNotNull('answer_text'); // Ambil hanya yang ada teksnya
+        }])
+            ->whereIn('id', $session['question_ids'])
+            ->get();
 
-                $pivot = $test->topics
-                    ->where('id', $question->topic_id)
-                    ->first()
-                    ->pivot;
+        $questions = $questions->sortBy(function ($model) use ($session) {
+            return array_search($model->id, $session['question_ids']);
+        })->values();
 
-                // Atur jawaban PG
-                if ($question->type === 'multiple_choice') {
+        return $questions->map(function ($question) use ($test) {
 
-                    $correct = $question->answers
-                        ->where('is_correct', true);
+            $topic = $test->topics->where('id', $question->topic_id)->first();
+            if (!$topic) return $question;
 
-                    $wrong = $question->answers
-                        ->where('is_correct', false)
-                        ->shuffle();
+            $pivot = $topic->pivot;
 
-                    // Ambil sesuai max_answers
-                    $answers = $correct
-                        ->merge(
-                            $wrong->take(
-                                max(
-                                    0,
-                                    $pivot->max_answers - $correct->count()
-                                )
-                            )
-                        );
+            // Atur jawaban PG
+            if ($question->type === 'multiple_choice') {
 
-                    if ($pivot->random_answers) {
-                        $answers = $answers->shuffle();
-                    }
+                // 🔥 FIX: AMBIL SEMUA JAWABAN DARI DATABASE
+                // Hapus logika pemisahan $correct & $wrong yang membatasi jumlah.
+                // Kita ambil langsung semua relasi answers yang sudah di-load.
 
-                    $question->setRelation('answers', $answers->values());
+                $answers = $question->answers;
+
+                // Tetap lakukan pengacakan jika fitur random aktif
+                if ($pivot->random_answers) {
+                    $answers = $answers->shuffle();
                 }
 
-                return $question;
-            });
+                // Set ulang relasi dengan urutan baru (atau urutan asli DB jika tidak diacak)
+                $question->setRelation('answers', $answers->values());
+            }
+
+            return $question;
+        });
     }
 
     /**

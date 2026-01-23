@@ -64,7 +64,8 @@ Route::middleware($baseMiddlewares)
                 '/tests/{test}/start',
                 [TestController::class, 'start']
             )->name('tests.start');
-
+            Route::post('/tests/{testUser}/update-progress', [TestController::class, 'updateProgress'])
+                ->name('tests.update_progress');
             /* ================= AUTOSAVE ================= */
             Route::post(
                 '/tests/{testUser}/answer',

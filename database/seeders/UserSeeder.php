@@ -14,6 +14,7 @@ class UserSeeder extends Seeder
         // ADMIN
         User::create([
             'name' => 'Admin CBT',
+            'npm' => '2317051099',
             'email' => 'admin@fk.unila.ac.id',
             'password' => Hash::make('password'),
             'role' => 'admin',
@@ -22,7 +23,8 @@ class UserSeeder extends Seeder
 
         // PESERTA
         $peserta = User::create([
-            'name' => 'Peserta Ujian',
+            'name' => 'Putra',
+            'npm' => '2317051098',
             'email' => 'peserta@fk.unila.ac.id',
             'password' => Hash::make('password'),
             'role' => 'peserta',
@@ -30,7 +32,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Assign ke group (angkatan)
-        $group = Group::where('name', 'Angkatan 2025')->first();
+        $group = Group::where('name', 'Angkatan 2024')->first();
         $peserta->groups()->attach($group->id);
     }
 }
