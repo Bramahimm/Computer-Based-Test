@@ -59,7 +59,6 @@ export const SideBarItems = [
     icon: Package,
     route: "admin.modules.index",
     subMenus: [
-
       {
         name: "Module",
         route: "admin.modules.index",
@@ -88,7 +87,33 @@ export const SideBarItems = [
     ],
   },
 
-  { name: "Tests", icon: ClipboardCheck, route: "admin.tests.index" },
+  {
+    name: "Tests",
+    icon: ClipboardCheck,
+    route: "admin.tests.index",
+    subMenus: [
+      {
+        name: "Tests",
+        route: "admin.tests.index",
+        params: { section: "tests" },
+      },
+      {
+        name: "results",
+        route: "admin.modules.index",
+        params: { section: "hasil" },
+      },
+      {
+        name: "Users",
+        route: "admin.modules.index",
+        params: { section: "questions" },
+      },
+      {
+        name: "Statistics",
+        route: "admin.modules.index",
+        params: { section: "results" },
+      },
+    ],
+  },
   { name: "Backup", icon: Database, route: "#" },
   { name: "Public", icon: Globe, route: "#" },
   { name: "Help", icon: HelpCircle, route: "#" },
