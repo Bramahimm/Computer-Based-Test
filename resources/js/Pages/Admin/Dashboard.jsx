@@ -70,7 +70,7 @@ export default function Dashboard({ stats, latestTests }) {
 
     return (
         <AdminLayout>
-            <Head title="Dasbor Admin" />
+            <Head title="Dasboard Admin" />
 
             <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-8">
                 {/* 1. Header Section */}

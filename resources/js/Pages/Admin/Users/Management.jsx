@@ -2,7 +2,7 @@ import React from "react";
 import Table from "@/Components/UI/Table";
 import Button from "@/Components/UI/Button";
 
-export default function Management({ users, onAddClick, onEditClick, flash }) {
+export default function Management({ users, onAddClick, onEditClick }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Header Section */}
@@ -41,24 +41,7 @@ export default function Management({ users, onAddClick, onEditClick, flash }) {
         </div>
       </div>
 
-      {/* Flash Message */}
-      {flash?.success && (
-        <div className="px-6 py-3 bg-green-50 border-b border-green-200 text-green-700 flex items-center gap-3">
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          <span className="text-sm font-medium">{flash.success}</span>
-        </div>
-      )}
+
 
       {/* Data Table */}
       <div className="p-6">

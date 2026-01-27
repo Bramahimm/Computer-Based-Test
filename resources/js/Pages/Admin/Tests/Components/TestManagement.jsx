@@ -81,14 +81,14 @@ export default function Management({
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold text-gray-900 ">Manajemen Ujian</h1>
-          <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+          <p className="text-[11px] text-gray-500 font-semibold">
             Kelola Daftar & Konfigurasi CBT
           </p>
         </div>
         <Button
           onClick={() => openModal()}
-          className="bg-blue-600 text-xs font-bold uppercase tracking-widest px-8">
-          + Ujian
+          className="bg-gradient-to-r from-green-60 text-xs font-bold px-8">
+          Tambah Ujian
         </Button>
       </div>
 
@@ -126,7 +126,7 @@ export default function Management({
             <Button
               type="submit"
               loading={processing}
-              className="bg-blue-600 px-10">
+              className="bg-green-600 px-10">
               Simpan
             </Button>
           </div>

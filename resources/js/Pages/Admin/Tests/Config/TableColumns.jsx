@@ -1,7 +1,6 @@
 export const getColumns = () => [
-  { label: "Nama Ujian", key: "title", className: "font-bold text-gray-800" },
-  { label: "Waktu Ujian", key: "schedule" },
+  { label: "Nama Ujian", key: "title", className: "text-center" },
+  { label: "Waktu Mulai", key: "start_time", className: "text-center" },
+  { label: "Waktu Selesai", key: "end_time" , className: "text-center"},
   { label: "Durasi", key: "duration", className: "text-center" },
-  { label: "Status", key: "status", className: "text-center" },
-  { label: "Aksi", key: "actions", className: "text-right" },
 ];

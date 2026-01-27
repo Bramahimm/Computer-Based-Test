@@ -41,7 +41,7 @@ export default function TestForm({
       </div>
 
       {/* CONTENT SLIDER CONTAINER - Dikunci tingginya */}
-      <div className="flex-1 overflow-visible relative mt-6 min-h-[500px] pb-20">
+      <div className="flex-1 overflow-hidden relative mt-6 min-h-[650px] pb-20">
         {/* TAB 0: UTAMA (Geser ke kiri saat tidak aktif) */}
         <div
           className={`absolute inset-0 w-full transition-all duration-500 ease-in-out transform ${
@@ -51,7 +51,7 @@ export default function TestForm({
           }`}>
           <div className="space-y-4 pr-1">
             <Input
-              label="Judul Ujian"
+              label="Judul Ujian"bata
               value={data.title}
               onChange={(e) => setData("title", e.target.value)}
               error={errors.title}

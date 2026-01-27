@@ -2,15 +2,20 @@ import React from "react";
 import Input from "@/Components/UI/Input";
 
 export default function UserForm({ data, setData, errors, groups }) {
+  // Logic pembatasan: Mahasiswa hanya boleh memilih 1 Group
   const handleGroupChange = (groupId) => {
     const isSelected = data.groups.includes(groupId);
+
     if (isSelected) {
+      // Jika sudah terpilih, maka hapus dari array (uncheck)
       setData(
         "groups",
-        data.groups.filter((id) => id !== groupId)
+        data.groups.filter((id) => id !== groupId),
       );
     } else {
-      setData("groups", [...data.groups, groupId]);
+      // Jika belum terpilih, timpa array dengan ID baru (Single Choice)
+      // Ini untuk 1 ID grup di dalam array data.groups
+      setData("groups", [groupId]);
     }
   };
 
@@ -44,32 +49,44 @@ export default function UserForm({ data, setData, errors, groups }) {
       />
 
       <div className="mt-4">
-        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tighter">
-          Groups / Angkatan
+        <label className="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">
+          Target Grup / Angkatan Mahasiswa
         </label>
+
+        {/* Grid sistem untuk pilihan grup */}
         <div className="grid grid-cols-2 gap-2">
           {groups.map((group) => (
             <label
               key={group.id}
-              className={`flex items-center space-x-2 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-all ${
+              className={`flex items-center space-x-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-all duration-200 ${
                 data.groups.includes(group.id)
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200"
+                  ? "border-green-500 bg-green-50 ring-2 ring-green-500/10"
+                  : "border-gray-200 bg-white"
               }`}>
               <input
                 type="checkbox"
                 checked={data.groups.includes(group.id)}
                 onChange={() => handleGroupChange(group.id)}
-                className="rounded border-gray-300 text-[#00a65a] focus:ring-[#00a65a] w-4 h-4"
+                className="rounded-full border-gray-300 text-[#00a65a] focus:ring-[#00a65a] w-4 h-4 transition-all"
               />
-              <span className="text-sm font-medium text-gray-700">
+              <span
+                className={`text-xs font-bold uppercase tracking-tight ${
+                  data.groups.includes(group.id)
+                    ? "text-green-700"
+                    : "text-gray-600"
+                }`}>
                 {group.name}
               </span>
             </label>
           ))}
         </div>
+
+        <p className="mt-3 text-[9px] text-gray-400 font-medium italic">
+          * Mahasiswa hanya dapat terdaftar dalam satu grup aktif.
+        </p>
+
         {errors.groups && (
-          <p className="mt-2 text-xs text-red-500 font-bold italic">
+          <p className="mt-2 text-[10px] text-red-500 font-bold uppercase tracking-widest italic">
             {errors.groups}
           </p>
         )}

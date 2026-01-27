@@ -94,24 +94,25 @@ export const SideBarItems = [
     route: "admin.tests.index",
     subMenus: [
       {
-        name: "Tests",
+        name: "Unggah Ujian",
         route: "admin.tests.index",
         params: { section: "tests" },
       },
       {
-        name: "results",
-        route: "admin.modules.index",
+
+        name: "Hasil Ujian",
+        route: "admin.tests.index",
         params: { section: "hasil" },
       },
       {
-        name: "Users",
-        route: "admin.modules.index",
+        name: "Lihat Pengguna",
+        route: "admin.tests.index",
         params: { section: "questions" },
       },
       {
-        name: "Statistics",
-        route: "admin.modules.index",
-        params: { section: "results" },
+        name: "Statistik Ujian",
+        route: "admin.tests.index",
+        params: { section: "statistic" },
       },
     ],
   },
