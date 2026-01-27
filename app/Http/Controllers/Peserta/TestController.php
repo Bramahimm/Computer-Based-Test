@@ -12,6 +12,7 @@ use App\Services\CBT\ExamTimeService;
 use App\Services\CBT\QuestionGeneratorService;
 use App\Services\CBT\ScoringService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request; // 🔥 Tambahkan ini untuk handle request update progress
 
 class TestController extends Controller
 {
@@ -34,24 +35,23 @@ class TestController extends Controller
 
                 $now = now();
                 $status = 'KERJAKAN';
-                $priority = 2; // Default priority (Normal)
+                $priority = 2;
 
                 // 1. Cek Status Spesifik User
                 if ($testUser) {
                     if ($testUser->status == 'submitted') {
                         $status = 'SELESAI';
-                        $priority = 4; // Paling bawah
+                        $priority = 4;
                     } elseif ($testUser->status == 'expired') {
                         $status = 'KADALUARSA';
                         $priority = 5;
                     } elseif ($testUser->status == 'ongoing') {
-                        // Cek waktu global
                         if ($now > $test->end_time) {
                             $status = 'KADALUARSA';
                             $priority = 5;
                         } else {
                             $status = 'LANJUTKAN';
-                            $priority = 1; // Paling atas (Urgent)
+                            $priority = 1;
                         }
                     }
                 }
@@ -64,21 +64,20 @@ class TestController extends Controller
                         $status = 'KADALUARSA';
                         $priority = 5;
                     } else {
-                        $status = 'KERJAKAN'; // Sedang aktif
+                        $status = 'KERJAKAN';
                         $priority = 2;
                     }
                 }
 
                 $test->user_status = $status;
-                $test->sort_priority = $priority; // Helper untuk sorting
+                $test->sort_priority = $priority;
                 return $test;
             })
-            // 🔥 LOGIC SORTING: Urutkan berdasarkan prioritas, lalu waktu mulai
             ->sortBy([
                 ['sort_priority', 'asc'],
                 ['start_time', 'desc'],
             ])
-            ->values(); // Reset array keys agar rapi di JSON
+            ->values();
 
         return inertia('Peserta/Tests/Index', compact('tests'));
     }
@@ -105,6 +104,9 @@ class TestController extends Controller
             $testUser->update(['started_at' => now(), 'status' => 'ongoing']);
         }
 
+        // 🔥 UPDATE ACTIVITY: Catat bahwa user sedang aktif sekarang
+        $testUser->update(['last_activity_at' => now()]);
+
         // Cek Expired
         ExamStateService::autoExpire($testUser);
         if ($testUser->status === 'expired' || $testUser->status === 'submitted') {
@@ -114,8 +116,7 @@ class TestController extends Controller
         // Ambil Soal
         $questions = QuestionGeneratorService::getQuestions($test, $user->id);
 
-        // 🔥 FIX 1: Ambil Jawaban Existing & Format Key-nya berdasarkan Question ID
-        // Ini memperbaiki bug warna navigasi saat lompat nomor atau refresh
+        // Ambil Jawaban Existing
         $existingAnswers = $testUser->answers()
             ->select('question_id', 'answer_id', 'answer_text')
             ->get()
@@ -133,11 +134,43 @@ class TestController extends Controller
             'testUserId' => $testUser->id,
             'questions' => $questions,
             'remainingSeconds' => ExamTimeService::remainingSeconds($testUser),
-            'existingAnswers' => $existingAnswers, // 🔥 Dikirim ke Frontend
-            'currentUser' => $user, // Opsional: kirim user explisit jika perlu debug NPM
+            'existingAnswers' => $existingAnswers,
+            'currentUser' => $user,
+
+            // 🔥 DATA POSISI SOAL: Dikirim ke Frontend agar bisa resume
+            'lastIndex' => $testUser->current_index ?? 0,
         ]);
     }
 
+    /**
+     * 🔥 NEW: Update Progress (Posisi Soal)
+     * Dipanggil via Axios saat user klik Next/Prev
+     */
+    public function updateProgress(Request $request, TestUser $testUser)
+    {
+        // Security Check: Pastikan user yang login adalah pemilik ujian ini
+        if ($testUser->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'index' => 'required|integer|min:0',
+            'question_id' => 'nullable|exists:questions,id'
+        ]);
+
+        // Update tracking columns di tabel test_users
+        $testUser->update([
+            'current_index' => $validated['index'],
+            'last_question_id' => $validated['question_id'] ?? null,
+            'last_activity_at' => now() // Update timestamp aktivitas
+        ]);
+
+        return response()->json(['status' => 'saved']);
+    }
+
+    /**
+     * Simpan Jawaban
+     */
     public function answer(SaveAnswerRequest $request, TestUser $testUser)
     {
         ExamStateService::autoExpire($testUser);
@@ -155,9 +188,15 @@ class TestController extends Controller
             $data['answer_text'] ?? null
         );
 
+        // 🔥 UPDATE ACTIVITY JUGA SAAT MENJAWAB
+        $testUser->update(['last_activity_at' => now()]);
+
         return response()->json(['status' => 'saved']);
     }
 
+    /**
+     * Selesai Ujian
+     */
     public function submit(TestUser $testUser)
     {
         $testUser->update([

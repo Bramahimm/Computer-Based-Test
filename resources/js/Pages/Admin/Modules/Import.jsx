@@ -1,117 +1,123 @@
-import React, { useMemo } from "react";
+import React, { useState } from "react";
 import Button from "@/Components/UI/Button";
-import { useForm, usePage } from "@inertiajs/react";
-import { 
-    CloudArrowUpIcon, DocumentTextIcon, CheckCircleIcon, 
-    ExclamationCircleIcon, ArrowDownTrayIcon, InformationCircleIcon, 
-    ArrowRightIcon, BookOpenIcon, FolderIcon 
+import { useForm, usePage, router } from "@inertiajs/react";
+import {
+    CloudArrowUpIcon, DocumentTextIcon, CheckCircleIcon,
+    ArrowDownTrayIcon, InformationCircleIcon,
+    ArrowRightIcon, BookOpenIcon, FolderIcon
 } from "@heroicons/react/24/outline";
 
 import QuestionImportAlert from "@/Pages/Admin/Components/QuestionImportAlert";
+import AdminLayout from "@/Layouts/AdminLayout";
 
-// 🔥 FIX: Tambahkan default value = [] agar tidak error 'undefined'
-export default function Import({ modules = [], topics = [] }) {
-  const { data, setData, post, processing, errors, reset } = useForm({
-    module_id: "",
+export default function Import({ modules = [], topics = [], filters = {} }) {
+
+const { data, setData, post, processing, errors, reset } = useForm({
+    module_id: filters.module_id || "", 
     topic_id: "",
     file: null,
-  });
+});
 
-  const { flash } = usePage().props;
+const [isLoading, setIsLoading] = useState(false);
+const { flash } = usePage().props;
 
-  const filteredTopics = useMemo(() => {
-      if (!data.module_id || !Array.isArray(topics)) return []; // Validasi tambahan
-      return topics.filter(t => t.module_id == data.module_id);
-  }, [data.module_id, topics]);
+const handleModuleChange = (e) => {
+    const selectedModuleId = e.target.value;
 
-  const handleFileUpload = (e) => setData("file", e.target.files[0]);
+    setData(d => ({ ...d, module_id: selectedModuleId, topic_id: "" }));
+    setIsLoading(true);
 
-  const submitImport = (e) => {
+     
+    router.get(
+          route('admin.modules.index'),
+        {
+              section: 'import',        
+            module_id: selectedModuleId 
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['topics', 'filters'],
+            onFinish: () => setIsLoading(false)
+        }
+    );
+};
+
+const handleFileUpload = (e) => setData("file", e.target.files[0]);
+
+const submitImport = (e) => {
     e.preventDefault();
+    // Post tetap ke ImportQuestionController (karena logika upload ada di sana)
     post(route("admin.import.questions"), {
-      forceFormData: true,
-      onSuccess: () => {
-          reset('file'); 
-          const fileInput = document.getElementById('file-upload');
-          if(fileInput) fileInput.value = null;
-      },
-      onError: (errors) => {
-          console.error("Import Error:", errors);
-      }
+    forceFormData: true,
+    onSuccess: () => {
+        reset('file');
+        const fileInput = document.getElementById('file-upload');
+        if(fileInput) fileInput.value = null;
+    },
+    onError: (err) => console.error(err)
     });
-  };
+};
 
-  const formatFileSize = (bytes) => {
+const formatFileSize = (bytes) => {
     if (!bytes) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
+};
 
-  return (
+return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      {/* ... (Kode JSX Tampilan sama persis seperti sebelumnya) ... */}
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Import Bank Soal</h1>
-          <p className="text-sm text-gray-500 mt-1">Unggah soal (Pilihan Ganda/Esai) via Excel ke Topik tertentu.</p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Import Bank Soal</h1>
+        <p className="text-sm text-gray-500 mt-1">Unggah soal (Pilihan Ganda/Esai) via Excel ke Topik tertentu.</p>
         </div>
         <a href={route("admin.questions.import.template")} className="inline-flex items-center gap-2 bg-gray-800 text-white hover:bg-gray-700 px-5 py-2.5 rounded-lg text-sm font-bold shadow-md transition-all">
-          <ArrowDownTrayIcon className="w-5 h-5" /> Unduh Template Soal
+        <ArrowDownTrayIcon className="w-5 h-5" /> Unduh Template Soal
         </a>
-      </div>
+    </div>
 
-      <QuestionImportAlert flash={flash} />
+    <QuestionImportAlert flash={flash} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Form Upload */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-               <CloudArrowUpIcon className="w-5 h-5 text-blue-600" />
-               <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Area Upload</h2>
+            <CloudArrowUpIcon className="w-5 h-5 text-blue-600" />
+            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Area Upload</h2>
             </div>
             
             <div className="p-6 md:p-8">
-              <form onSubmit={submitImport} className="space-y-6">
-                
-                {/* 1. PILIH MODUL */}
+            <form onSubmit={submitImport} className="space-y-6">
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Pilih Modul <span className="text-red-500">*</span></label>
                     <div className="relative">
-                        <select 
-                            value={data.module_id} 
-                            onChange={(e) => {
-                                setData(d => ({ ...d, module_id: e.target.value, topic_id: "" })); 
-                            }} 
-                            className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 pl-10 py-2.5 appearance-none bg-white"
-                        >
+                        <select value={data.module_id} onChange={handleModuleChange} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 pl-10 py-2.5 appearance-none bg-white">
                             <option value="">-- Silakan Pilih Modul --</option>
                             {modules.map((m) => (
                                 <option key={m.id} value={m.id}>{m.name}</option>
                             ))}
                         </select>
                         <FolderIcon className="w-5 h-5 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+                        {isLoading && (
+                            <div className="absolute right-10 top-3">
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* 2. PILIH TOPIK */}
                 <div className={`transition-all duration-300 ${!data.module_id ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Pilih Topik Tujuan <span className="text-red-500">*</span></label>
                     <div className="relative">
-                        <select 
-                            value={data.topic_id} 
-                            onChange={(e) => setData('topic_id', e.target.value)} 
-                            disabled={!data.module_id} 
-                            className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 pl-10 py-2.5 appearance-none bg-white disabled:bg-gray-100"
-                        >
+                        <select value={data.topic_id} onChange={(e) => setData('topic_id', e.target.value)} disabled={!data.module_id || isLoading} className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 pl-10 py-2.5 appearance-none bg-white disabled:bg-gray-100">
                             <option value="">
-                                {data.module_id ? "-- Silakan Pilih Topik --" : "-- Pilih Modul Terlebih Dahulu --"}
+                                {isLoading ? "Memuat Topik..." : (data.module_id ? (topics.length > 0 ? "-- Silakan Pilih Topik --" : "-- Tidak Ada Topik Aktif --") : "-- Pilih Modul Terlebih Dahulu --")}
                             </option>
-                            {filteredTopics.map((t) => (
+                            {topics.map((t) => (
                                 <option key={t.id} value={t.id}>{t.name}</option>
                             ))}
                         </select>
@@ -120,7 +126,6 @@ export default function Import({ modules = [], topics = [] }) {
                     {errors.topic_id && <p className="text-red-500 text-sm mt-1">{errors.topic_id}</p>}
                 </div>
 
-                {/* 3. UPLOAD FILE */}
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">File Excel/CSV <span className="text-red-500">*</span></label>
                     <div className={`relative w-full border-2 border-dashed rounded-xl transition-all p-8 flex flex-col items-center justify-center text-center group ${data.file ? "border-emerald-400 bg-emerald-50/30" : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"}`}>
@@ -149,27 +154,13 @@ export default function Import({ modules = [], topics = [] }) {
                         {!processing && <ArrowRightIcon className="w-4 h-4" />}
                     </Button>
                 </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Info (Tetap sama) */}
-        <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
-                    <InformationCircleIcon className="w-5 h-5 text-blue-500" />
-                    <h3 className="font-bold text-gray-800 text-sm uppercase">Panduan Format</h3>
-                </div>
-                <ul className="space-y-4 text-sm text-gray-600">
-                    <li className="flex gap-3"><div className="mt-0.5 w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold border border-blue-100">1</div><span>Gunakan template yang sudah disediakan.</span></li>
-                    <li className="flex gap-3"><div className="mt-0.5 w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold border border-blue-100">2</div><span>Kolom Tipe Soal isi dengan: <code>pilihan_ganda</code> atau <code>esai</code>.</span></li>
-                    <li className="flex gap-3"><div className="mt-0.5 w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold border border-blue-100">3</div><span>Kunci Jawaban PG wajib huruf tunggal (A/B/C/D/E).</span></li>
-                    <li className="flex gap-3"><div className="mt-0.5 w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold border border-blue-100">4</div><span>Pilih <strong>Modul</strong> lalu <strong>Topik</strong> sebelum upload.</span></li>
-                </ul>
+            </form>
             </div>
         </div>
-      </div>
+        </div>
     </div>
-  );
+    </div>
+);
 }
+
+Import.layout = page => <AdminLayout>{page}</AdminLayout>;

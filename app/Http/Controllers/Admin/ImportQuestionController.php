@@ -6,36 +6,46 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ImportQuestionsRequest;
 use App\Imports\QuestionsImport;
 use App\Models\Topic;
+use App\Models\Module;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ImportQuestionController extends Controller
 {
-    /**
-     * Tampilkan Halaman Import dengan List Topik
-     */
-    public function create()
+    public function create(Request $request)
     {
-        // 1. Ambil Data Modul (Hanya ID dan Nama)
-        $modules = \App\Models\Module::select('id', 'name')->get();
+        // 1. Tangkap module_id dari URL
+        $moduleId = $request->input('module_id');
 
-        // 2. Ambil Data Topik (Sertakan module_id untuk filtering di frontend)
-        $topics = \App\Models\Topic::select('id', 'name', 'module_id')
-            ->where('is_active', true)
-            ->get();
+        // 2. Ambil List Modul
+        $modules = Module::select('id', 'name')->orderBy('name')->get();
 
-        return inertia('Admin/Questions/Import', [
-            'modules' => $modules, // Data untuk dropdown pertama
-            'topics'  => $topics   // Data untuk dropdown kedua (akan difilter JS)
+        // 3. Ambil Topik (Server-Side Filter)
+        $topics = [];
+        if ($moduleId) {
+            $topics = Topic::select('id', 'name', 'module_id')
+                ->where('module_id', $moduleId)
+                // ->where('is_active', true) // Filter aktif dimatikan dulu biar data pasti muncul
+                ->orderBy('name')
+                ->get();
+        }
+
+        // 🔥 PERBAIKAN DISINI: Sesuaikan dengan lokasi file Anda (Admin/Modules/Import)
+        return inertia('Admin/Modules/Import', [
+            'modules' => $modules,
+            'topics'  => $topics,
+            'filters' => ['module_id' => $moduleId]
         ]);
     }
 
     /**
-     * Proses Import Excel
+     * Proses Upload CSV
      */
     public function store(ImportQuestionsRequest $request)
     {
+        // ... (kode validasi & import di atas tetap sama) ...
         $file = $request->file('file');
         $topicId = $request->topic_id;
 
@@ -43,27 +53,19 @@ class ImportQuestionController extends Controller
         try {
             $importer = new QuestionsImport($topicId);
             Excel::import($importer, $file);
-
             DB::commit();
 
-            $msg = "Berhasil mengimport {$importer->importedCount} soal.";
 
-            // Cek jika ada baris yang dilewati (skipped)
-            if (count($importer->skipped) > 0) {
-                $skippedMsg = implode("\n", array_slice($importer->skipped, 0, 5));
-                if (count($importer->skipped) > 5) $skippedMsg .= "\n...dan lainnya.";
-
-                return redirect()->back()->with('warning', "$msg\n\nBeberapa data dilewati:\n" . $skippedMsg);
-            }
-
-            return redirect()->back()->with('success', $msg);
+            return redirect()
+                ->route('admin.modules.index', ['section' => 'import'])
+                ->with('success', "Berhasil mengimport {$importer->importedCount} soal!");
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage());
 
-            // Gunakan nama route lengkap: 'admin.' + 'questions.import.view'
+            // Jika gagal, kembalikan juga ke section import dengan error
             return redirect()
-                ->route('admin.questions.import.view')
+                ->route('admin.modules.index', ['section' => 'import'])
                 ->withErrors(['file' => 'Gagal Import: ' . $e->getMessage()]);
         }
     }
@@ -97,26 +99,31 @@ class ImportQuestionController extends Controller
 
         // Contoh 1: Pilihan Ganda
         $example1 = [
-            'Siapa presiden pertama Indonesia?', // Soal
-            'pilihan_ganda',                     // Tipe (Indo)
-            'Soeharto',                          // A
-            'B.J. Habibie',                      // B
-            'Ir. Soekarno',                      // C
-            'Joko Widodo',                       // D
-            'Megawati',                          // E
-            'C'                                  // Kunci
+            'Tulang terpanjang dan terkuat pada tubuh manusia yang terletak di bagian paha adalah...', // Soal
+            'pilihan_ganda',        // Tipe
+            'Tibia',                // A
+            'Fibula',               // B
+            'Femur',                // C
+            'Humerus',              // D
+            'Radius',               // E
+            'C'                     // Kunci Jawaban (Femur)
         ];
 
-        // Contoh 2: Esai
+
+
+
+
+
+        // CONTOH 2: ESAI (ANATOMI & FISIOLOGI)
         $example2 = [
-            'Jelaskan makna Bhinneka Tunggal Ika.',
-            'esai',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '' // Opsi kosong
+            'Sebutkan 4 (empat) katup utama yang terdapat pada jantung manusia!', // Soal
+            'esai',                 // Tipe
+            '',                     // A (Kosong)
+            '',                     // B (Kosong)
+            '',                     // C (Kosong)
+            '',                     // D (Kosong)
+            '',                     // E (Kosong)
+            ''                      // Kunci (Kosong)
         ];
 
         $callback = function () use ($columns, $example1, $example2) {

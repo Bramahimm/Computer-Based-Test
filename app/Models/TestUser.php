@@ -15,14 +15,19 @@ class TestUser extends Model
         'started_at',
         'finished_at',
         'status',
+        'current_index',
+        'last_question_id',
+        'last_activity_at',
     ];
 
     /**
-     *  CASTING WAJIB (ANTI ERROR TIMER)
+     * CASTING WAJIB (ANTI ERROR TIMER & CARBON)
      */
     protected $casts = [
-        'started_at'  => 'datetime',
-        'finished_at' => 'datetime',
+        'started_at'       => 'datetime',
+        'finished_at'      => 'datetime',
+        'last_activity_at' => 'datetime', 
+        'current_index'    => 'integer',
     ];
 
     /* ================= RELATIONS ================= */
@@ -49,5 +54,11 @@ class TestUser extends Model
     public function result()
     {
         return $this->hasOne(Result::class);
+    }
+
+    // Berguna jika Anda ingin menampilkan "Lanjut mengerjakan soal: [Judul Soal]" di dashboard
+    public function lastQuestion()
+    {
+        return $this->belongsTo(Question::class, 'last_question_id');
     }
 }

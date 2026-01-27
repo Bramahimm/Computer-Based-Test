@@ -40,7 +40,7 @@ export const SideBarItems = [
         params: { section: "online" },
       },
       {
-        name: "Import",
+        name: "Import Pengguna",
         id: "Import",
         route: "admin.users.index",
         params: { section: "import" },
@@ -60,30 +60,31 @@ export const SideBarItems = [
     route: "admin.modules.index",
     subMenus: [
       {
-        name: "Module",
+        name: "Grup Angkatan",
         route: "admin.modules.index",
         params: { section: "class" },
       },
       {
-        name: "Topic",
+        name: "Mata Kuliah",
         route: "admin.modules.index",
         params: { section: "subjects" },
       },
       {
-        name: "Questions",
+        name: "Pertanyaan",
         route: "admin.modules.index",
         params: { section: "questions" },
       },
       {
-        name: "Answers",
+        name: "Jawaban",
         route: "admin.modules.index",
         params: { section: "results" },
       },
       {
-        name: "Import",
+        name: "Import Soal",
         route: "admin.modules.index",
         params: { section: "import" },
       },
+
     ],
   },
 

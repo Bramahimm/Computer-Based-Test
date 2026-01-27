@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Trash2 } from 'lucide-react'; // Pastikan install/import icon ini
 
 export default function AnswerOptions({ question, selectedAnswer, testUserId, onAnswer }) {
     const [isSaving, setIsSaving] = useState(false);
 
+    // Logic Pilih Jawaban (TETAP SAMA)
     const handleSelect = async (answerId, answerText) => {
-        // 1. Optimistic Update (Langsung update UI biar cepat)
+        if (isSaving || selectedAnswer?.answerId === answerId) return;
+
         onAnswer({ answerId, answerText });
 
-        // 2. Kirim ke Backend (Background Process)
         setIsSaving(true);
         try {
             await axios.post(route('peserta.tests.answer', testUserId), {
@@ -17,7 +19,29 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
             });
         } catch (error) {
             console.error("Gagal menyimpan jawaban", error);
-            alert("Gagal menyimpan jawaban. Periksa koneksi internet Anda.");
+            alert("Gagal menyimpan jawaban. Cek koneksi Anda.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // 🔥 BARU: Logic Batal Jawab
+    const handleClear = async () => {
+        if (isSaving || !selectedAnswer?.answerId) return;
+
+        // 1. Optimistic Update (Set null)
+        onAnswer(null);
+
+        // 2. Background Save (Kirim null ke server)
+        setIsSaving(true);
+        try {
+            await axios.post(route('peserta.tests.answer', testUserId), {
+                question_id: question.id,
+                answer_id: null, // Null = Hapus jawaban
+                answer_text: null
+            });
+        } catch (error) {
+            console.error("Gagal menghapus jawaban", error);
         } finally {
             setIsSaving(false);
         }
@@ -25,6 +49,7 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
 
     return (
         <div className="space-y-3">
+            {/* Loop Jawaban (TETAP SAMA) */}
             {question.answers.map((option) => {
                 const isSelected = selectedAnswer?.answerId === option.id;
                 
@@ -39,9 +64,9 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
                                 ? 'border-emerald-500 bg-emerald-50/50 shadow-md ring-1 ring-emerald-200' 
                                 : 'border-gray-100 hover:border-emerald-200 hover:bg-gray-50'
                             }
+                            ${isSaving ? 'cursor-wait opacity-70' : 'cursor-pointer'}
                         `}
                     >
-                        {/* Indikator Bulatan (Radio) */}
                         <div className={`
                             w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors
                             ${isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300 group-hover:border-emerald-400'}
@@ -49,17 +74,19 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
                             {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                         </div>
 
-                        {/* Teks Jawaban */}
                         <div className="flex-1">
                             {option.answer_image && (
-                                <img src={`/storage/${option.answer_image}`} className="mb-2 max-h-40 rounded-lg" />
+                                <img 
+                                    src={`/storage/${option.answer_image}`} 
+                                    className="mb-2 max-h-40 rounded-lg border border-gray-200" 
+                                    alt="Opsi Gambar"
+                                />
                             )}
-                            <span className={`text-base ${isSelected ? 'text-emerald-900 font-medium' : 'text-gray-700'}`}>
+                            <span className={`text-base leading-relaxed ${isSelected ? 'text-emerald-900 font-medium' : 'text-gray-700'}`}>
                                 {option.answer_text}
                             </span>
                         </div>
 
-                        {/* Dekorasi Garis Kanan */}
                         {isSelected && (
                             <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-emerald-500" />
                         )}
@@ -67,14 +94,32 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
                 );
             })}
 
-            {/* Status Simpan Kecil di Bawah */}
-            <div className="flex justify-end mt-2 h-5">
-                {isSaving && (
-                    <span className="text-xs text-emerald-600 animate-pulse font-medium flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-ping"></span>
-                        Menyimpan...
-                    </span>
-                )}
+            {/* 🔥 BARU: Footer Action (Tombol Batal & Loading) */}
+            <div className="flex justify-between items-center pt-2 mt-4 border-t border-gray-50">
+                
+                {/* Tombol Batal (Hanya muncul jika sudah menjawab) */}
+                <div>
+                    {selectedAnswer?.answerId && (
+                        <button 
+                            onClick={handleClear}
+                            disabled={isSaving}
+                            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Batal Jawab
+                        </button>
+                    )}
+                </div>
+
+                {/* Status Simpan */}
+                <div className="h-5 flex items-center">
+                    {isSaving && (
+                        <span className="text-xs text-emerald-600 animate-pulse font-medium flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-ping"></span>
+                            Menyimpan...
+                        </span>
+                    )}
+                </div>
             </div>
         </div>
     );
