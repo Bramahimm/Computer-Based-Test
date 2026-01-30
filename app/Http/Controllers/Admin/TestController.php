@@ -9,21 +9,26 @@ use App\Models\Test;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\Topic;
+use App\Models\TestUser;
+
 
 class TestController extends Controller
 {
     /* ================= INDEX ================= */
-public function index()
-{
-    return inertia('Admin/Tests/Index', [
-        'tests' => Test::with('groups', 'topics')->latest()->get(),
-        'modules' => Module::where('is_active', true) -> get(),
-        'groups' => Group::all(),
-        'topics' => Topic::with('module')
-            ->where('is_active', true)
-            ->get(),
-    ]);
-}
+    public function index()
+    {
+        return inertia('Admin/Tests/Index', [
+            'tests' => Test::with('groups', 'topics')->latest()->get(),
+            'modules' => Module::where('is_active', true) -> get(),
+            'groups' => Group::all(),
+            'topics' => Topic::with('module')
+                ->where('is_active', true)
+                ->get(),
+            'results' => TestUser::with('user', 'test', 'result')
+                ->whereHas('result')
+                ->get(),
+        ]);
+    }
 
     /* ================= CREATE ================= */
     public function create()
