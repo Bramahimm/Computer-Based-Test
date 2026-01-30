@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TestUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class ResultController extends Controller
 {
@@ -19,16 +20,23 @@ class ResultController extends Controller
     }
 
     public function validateResult(Request $request, TestUser $testUser)
-    {
-        $request->validate([
-            'total_score' => 'required|integer|min:0',
-        ]);
-
-        $testUser->result->update([
-            'total_score' => $request->total_score,
-            'status' => 'validated',
-            'validated_by' => Auth::id(),
-            'validated_at' => now(),
-        ]);
+{
+    // Pastikan result ada
+    if (!$testUser->result) {
+        abort(404);
     }
+
+    // Gunakan nilai otomatis dari sistem
+    $testUser->result->update([
+        'status' => 'validated',
+        'validated_by' => Auth::id(),
+        'validated_at' => now(),
+    ]);
+
+    // Tetap di halaman results
+    return Inertia::location(route('admin.tests.index', [
+        'section' => 'results'
+    ]));
+}
+
 }

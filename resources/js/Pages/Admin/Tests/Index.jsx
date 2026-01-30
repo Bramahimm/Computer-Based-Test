@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Head, usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Management from "./Components/TestManagement";
+import Results from "./Results"
 
 export default function Index(props) {
   const { url } = usePage();
@@ -16,6 +17,8 @@ export default function Index(props) {
     switch (section) {
       case "tests":
         return <Management {...props} />;
+      case "results":
+        return <Results {...props} />;
       default:
         return (
           <div className="bg-white p-20 rounded-xl border border-dashed text-center text-gray-400">

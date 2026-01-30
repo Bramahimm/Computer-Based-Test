@@ -12,15 +12,26 @@ use App\Models\Test;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\Topic;
+use App\Models\TestUser;
+
 
 class TestController extends Controller
 {
-public function index(Request $request) // Tambahkan Request
+    /* ================= INDEX ================= */
+    public function index()
     {
-        // 1. Ambil Query Dasar dengan Eager Loading
-        // Kita load 'topics.module' agar nanti di tabel bisa muncul nama Modulnya
-        $query = Test::with(['groups', 'topics.module'])
-            ->latest();
+        return inertia('Admin/Tests/Index', [
+            'tests' => Test::with('groups', 'topics')->latest()->get(),
+            'modules' => Module::where('is_active', true) -> get(),
+            'groups' => Group::all(),
+            'topics' => Topic::with('module')
+                ->where('is_active', true)
+                ->get(),
+            'results' => TestUser::with('user', 'test', 'result')
+                ->whereHas('result')
+                ->get(),
+        ]);
+    
 
         // 2. Filter Pencarian (Judul Ujian)
         if ($request->search) {

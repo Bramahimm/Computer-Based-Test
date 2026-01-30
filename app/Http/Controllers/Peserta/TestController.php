@@ -13,6 +13,8 @@ use App\Services\CBT\QuestionGeneratorService;
 use App\Services\CBT\ScoringService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request; // 🔥 Tambahkan ini untuk handle request update progress
+use App\Models\Answer;
+use App\Models\Question;
 
 class TestController extends Controller
 {
@@ -171,6 +173,7 @@ class TestController extends Controller
     /**
      * Simpan Jawaban
      */
+
     public function answer(SaveAnswerRequest $request, TestUser $testUser)
     {
         ExamStateService::autoExpire($testUser);
@@ -181,18 +184,38 @@ class TestController extends Controller
 
         $data = $request->validated();
 
-        AnswerService::save(
-            $testUser->id,
-            $data['question_id'],
-            $data['answer_id'] ?? null,
-            $data['answer_text'] ?? null
-        );
+        $isCorrect = null;
+        $score = null;
 
-        // 🔥 UPDATE ACTIVITY JUGA SAAT MENJAWAB
-        $testUser->update(['last_activity_at' => now()]);
+        if (!empty($data['answer_id'])) {
+            // ambil jawaban master
+            $answer = Answer::find($data['answer_id']);
 
-        return response()->json(['status' => 'saved']);
-    }
+            if ($answer) {
+                $isCorrect = (bool) $answer->is_correct;
+
+                if ($isCorrect) {
+                    $question = Question::find($data['question_id']);
+                    $score = $question?->score ?? 0;
+                } else {
+                    $score = 0;
+                    }
+            }
+        }
+
+    AnswerService::save(
+        $testUser->id,
+        $data['question_id'],
+        $data['answer_id'] ?? null,
+        $data['answer_text'] ?? null,
+        $isCorrect,
+        $score
+    );
+
+    $testUser->update(['last_activity_at' => now()]);
+
+    return response()->json(['status' => 'saved']);
+}
 
     /**
      * Selesai Ujian
