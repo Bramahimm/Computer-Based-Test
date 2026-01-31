@@ -13,7 +13,7 @@ import Selection from "./Selection";
 import Import from "./Import";
 import Results from "./Results";
 
-export default function Index({ users = [], groups = [] }) {
+export default function Index({ users = [], groups = [], totalOnline = 0 }) {
   const { url, props } = usePage();
   // Mengambil flash secara eksplisit dari props
   const { flash } = props;
@@ -92,7 +92,9 @@ export default function Index({ users = [], groups = [] }) {
       case "selection":
         return <Selection {...commonProps} />;
       case "online":
-        return <Online users={users} />;
+        return (
+          <Online {...commonProps} users={users} totalOnline={totalOnline} />
+        );
       case "import":
         return <Import flash={flash} />;
       case "individual":
@@ -110,7 +112,9 @@ export default function Index({ users = [], groups = [] }) {
 
   return (
     <AdminLayout>
-      <Head title={`Manajemen Pengguna - ${section.charAt(0).toUpperCase() + section.slice(1)}`} />
+      <Head
+        title={`Manajemen Pengguna - ${section.charAt(0).toUpperCase() + section.slice(1)}`}
+      />
 
       <div className="space-y-6">
         {/* Render Sub-view aktif berdasarkan key section untuk reset animasi */}
@@ -124,8 +128,7 @@ export default function Index({ users = [], groups = [] }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editMode ? "Edit Pengguna" : "Tambah Pengguna Baru"}
-        size="lg"
-      >
+        size="lg">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <UserForm
             data={data}
@@ -139,15 +142,13 @@ export default function Index({ users = [], groups = [] }) {
               type="button"
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="px-3 py-1.5 text-sm font-medium"
-            >
+              className="px-3 py-1.5 text-sm font-medium">
               Batal
             </Button>
             <Button
               type="submit"
               loading={processing}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 text-sm font-medium transition-colors"
-            >
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 text-sm font-medium transition-colors">
               {editMode ? "Perbarui" : "Simpan"}
             </Button>
           </div>

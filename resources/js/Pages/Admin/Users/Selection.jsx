@@ -1,169 +1,206 @@
 import React, { useState, useMemo } from "react";
 import { router, usePage } from "@inertiajs/react";
-import { CheckSquare, Search } from "lucide-react"; // Icon Lucide
+import { CheckSquare, Square } from "lucide-react";
 import Table from "@/Components/UI/Table";
-import Button from "@/Components/UI/Button";
 import Pagination from "@/Components/UI/Pagination";
 import DataFilter from "@/Components/Shared/DataFilter";
+import SelectionHeader from "./Selection-Components/SelectionHeader";
+import AssignGroupModal from "./Selection-Components/AssignGroupModal";
 
-export default function Selection({ users }) {
-  // Ambil groups & filters dari usePage (dikirim via middleware/controller)
-  const { groups, filters } = usePage().props;
+export default function Selection({ users, groups }) {
+  const { filters } = usePage().props;
 
-  // State untuk parameter filter/search
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [params, setParams] = useState({
     search: filters?.search || "",
     group_id: filters?.group_id || "",
   });
 
-  // --- Logic Refresh Data (Server-side) ---
-  const refreshData = (newParams) => {
-    setParams(newParams);
-    router.get(
-      route("admin.users.index"),
-      { ...newParams, section: "selection" }, // Pastikan section='selection'
+  // logic selection
+  const allIdsOnPage = users.data ? users.data.map((u) => u.id) : [];
+  const isAllSelected =
+    allIdsOnPage.length > 0 &&
+    allIdsOnPage.every((id) => selectedUserIds.includes(id));
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedUserIds((prev) =>
+        prev.filter((id) => !allIdsOnPage.includes(id)),
+      );
+    } else {
+      const newSet = new Set([...selectedUserIds, ...allIdsOnPage]);
+      setSelectedUserIds(Array.from(newSet));
+    }
+  };
+
+  const handleSelectOne = (id) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id],
+    );
+  };
+
+  // logic assignment
+  const handleConfirmAssign = (targetGroupIds) => {
+    setIsProcessing(true);
+    router.post(
+      route("admin.users.assign-groups"),
       {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
+        user_ids: selectedUserIds,
+        group_ids: targetGroupIds,
+      },
+      {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setSelectedUserIds([]);
+          setIsProcessing(false);
+        },
+        onError: () => setIsProcessing(false),
       },
     );
   };
 
-  // --- Config Dropdown Filter (Grup) ---
-  const filterConfig = useMemo(
+  // logic filter
+  const refreshData = (newParams) => {
+    setParams(newParams);
+    setSelectedUserIds([]);
+    router.get(
+      route("admin.users.index"),
+      { ...newParams, section: "selection" },
+      { preserveState: true, preserveScroll: true, replace: true },
+    );
+  };
+
+  const columns = useMemo(
     () => [
       {
-        label: "Filter Grup",
-        value: params.group_id,
-        options: groups.map((g) => ({ value: g.id, label: g.name })),
-        onChange: (val) => refreshData({ ...params, group_id: val }),
+        label: (
+          <div
+            className="flex justify-center cursor-pointer"
+            onClick={handleSelectAll}>
+            {isAllSelected ? (
+              <CheckSquare className="w-5 h-5 text-indigo-600" />
+            ) : (
+              <Square className="w-5 h-5 text-gray-300" />
+            )}
+          </div>
+        ),
+        key: "select",
+        className: "w-12 text-center",
+        render: (_, row) => (
+          <div
+            className="flex justify-center items-center cursor-pointer p-1"
+            onClick={() => handleSelectOne(row.id)}>
+            {selectedUserIds.includes(row.id) ? (
+              <CheckSquare className="w-5 h-5 text-indigo-600" />
+            ) : (
+              <Square className="w-5 h-5 text-gray-300 hover:text-gray-400" />
+            )}
+          </div>
+        ),
       },
+      {
+        label: "NPM",
+        key: "npm",
+        className: "font-mono text-sm w-32",
+        render: (v) => <span className="text-gray-600">{v || "-"}</span>,
+      },
+      {
+        label: "Nama Lengkap",
+        key: "name",
+        className: "font-semibold text-gray-800",
+        render: (v, r) => (
+          <span
+            className={
+              selectedUserIds.includes(r.id) ? "text-indigo-700 font-bold" : ""
+            }>
+            {v}
+          </span>
+        ),
+      },
+      {
+        label: "Grup Saat Ini",
+        key: "groups",
+        render: (g) =>
+          g && g.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {g.map((i) => (
+                <span
+                  key={i.id}
+                  className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold border border-gray-200">
+                  {i.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-400 italic text-xs">-</span>
+          ),
+      },
+      { label: "Email", key: "email", className: "text-gray-500 text-xs" },
     ],
-    [params, groups],
+    [selectedUserIds, isAllSelected, users.data],
   );
-
-  // --- Logic Search dengan Debounce ---
-  const onSearch = (val) => {
-    setParams((prev) => ({ ...prev, search: val }));
-    clearTimeout(window.searchTimeout);
-    window.searchTimeout = setTimeout(() => {
-      router.get(
-        route("admin.users.index"),
-        { ...params, search: val, section: "selection" },
-        {
-          preserveState: true,
-          preserveScroll: true,
-          replace: true,
-        },
-      );
-    }, 400);
-  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* --- Header Section --- */}
-      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5">
-              {/* Icon CheckSquare untuk Selection */}
-              <CheckSquare className="w-6 h-6 text-gray-700" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Pilih Pengguna
-              </h1>
-              <p className="text-[11px] text-gray-500 font-semibold">
-                {/* PERBAIKAN 1: Gunakan .total */}
-                {users.total || 0} pengguna tersedia untuk seleksi
-              </p>
-            </div>
-          </div>
-          {/* Tombol Aksi Massal (Nanti bisa difungsikan) */}
-          <Button
-            variant="outline"
-            className="text-xs px-4 py-2 border-gray-300 text-gray-600"
-            onClick={() => alert("Fitur Bulk Action akan segera hadir!")}>
-            Pilih Semua
-          </Button>
-        </div>
-      </div>
+      {/* Header Component */}
+      <SelectionHeader
+        totalUsers={users.total || 0}
+        selectedCount={selectedUserIds.length}
+        onAssignClick={() => setIsModalOpen(true)}
+      />
 
       <div className="p-6">
-        {/* --- Search & Filter --- */}
+        {/* Filter Logic */}
         <DataFilter
-          searchPlaceholder="Cari pengguna..."
+          searchPlaceholder="Cari nama atau NPM..."
           searchValue={params.search}
-          onSearchChange={onSearch}
-          filters={filterConfig}
+          onSearchChange={(val) => {
+            setParams((p) => ({ ...p, search: val }));
+            // Logic debounce search bisa tetap disini atau pindah ke custom hook
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+              router.get(
+                route("admin.users.index"),
+                { ...params, search: val, section: "selection" },
+                { preserveState: true, replace: true },
+              );
+            }, 400);
+          }}
+          filters={[
+            {
+              label: "Filter Grup Asal",
+              value: params.group_id,
+              options: groups.map((g) => ({ value: g.id, label: g.name })),
+              onChange: (val) => refreshData({ ...params, group_id: val }),
+            },
+          ]}
           onReset={() => refreshData({ search: "", group_id: "" })}
         />
 
-        {/* --- Table Data --- */}
+        {/* Table & Pagination */}
         <Table
           data={users.data || []}
           emptyMessage="Tidak ada pengguna ditemukan"
-          columns={[
-            // Kolom Checkbox (Simulasi dulu)
-            {
-              label: "",
-              key: "select",
-              className: "w-10 text-center",
-              render: (_, row) => (
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                />
-              ),
-            },
-            {
-              label: "NPM",
-              key: "npm",
-              className: "font-mono text-sm w-32",
-            },
-            {
-              label: "Nama Lengkap",
-              key: "name",
-              className: "font-semibold",
-            },
-            {
-              label: "Grup",
-              key: "groups",
-              render: (g) =>
-                g && g.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {g.map((i) => (
-                      <span
-                        key={i.id}
-                        className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold border border-gray-200">
-                        {i.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-gray-400 italic text-xs">-</span>
-                ),
-            },
-            {
-              label: "Email",
-              key: "email",
-              className: "text-gray-500 text-xs",
-            },
-            {
-              label: "Hasil Ujian",
-              key: "result",
-              className: "font-semibold",
-            },
-          ]}
-          className="hover:bg-gray-50 transition-colors"
+          columns={columns}
         />
-
-        {/* Pagination */}
         <div className="mt-4">
           {users.links && <Pagination links={users.links} />}
         </div>
       </div>
+
+      {/* Modal Component */}
+      <AssignGroupModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        groups={groups}
+        selectedCount={selectedUserIds.length}
+        onConfirm={handleConfirmAssign}
+        isLoading={isProcessing}
+      />
     </div>
   );
 }

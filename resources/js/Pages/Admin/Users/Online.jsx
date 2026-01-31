@@ -1,164 +1,120 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { router } from "@inertiajs/react";
+import { Monitor, RefreshCw, Wifi } from "lucide-react";
 import Table from "@/Components/UI/Table";
-import Button from "@/Components/UI/Button";
+import Pagination from "@/Components/UI/Pagination";
 
-// --- SUB-KOMPONEN KECIL ---
-
-const OnlineStats = ({ count }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-    <StatCard label="Pengguna Online" value={count} color="blue" icon="bolt" />
-    <StatCard
-      label="Update Otomatis dalam"
-      value="30dtk"
-      color="purple"
-      icon="schedule"
-    />
-    <StatCard
-      label="Status Sistem"
-      value="Stabil"
-      color="green"
-      icon="check_circle"
-    />
-  </div>
-);
-
-const StatCard = ({ label, value, color, icon }) => (
-  <div className={`bg-${color}-50 border border-${color}-100 rounded-lg p-4`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className={`text-sm font-medium text-${color}-600`}>{label}</p>
-        <p className={`text-2xl font-bold text-${color}-900 mt-1`}>{value}</p>
-      </div>
-      <span className={`material-icons text-${color}-400 text-3xl`}>
-        {icon}
-      </span>
-    </div>
-  </div>
-);
-
-const UserInfo = ({ name, lastActivity }) => (
-  <div className="flex items-center gap-3">
-    <div className="relative">
-      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-        <span className="material-icons text-green-600 text-sm">person</span>
-      </div>
-      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-    </div>
-    <div>
-      <div className="font-medium text-gray-900">{name}</div>
-      <div className="text-[10px] text-gray-500 uppercase font-bold tracking-tight">
-        Aktif: {lastActivity || "Baru saja"}
-      </div>
-    </div>
-  </div>
-);
-
-// --- KOMPONEN UTAMA ---
-
-export default function Online({ users = [] }) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
+// PERBAIKAN: Tambahkan 'totalOnline' disini
+export default function Online({ users, totalOnline }) {
   useEffect(() => {
-    const interval = setInterval(() => handleManualRefresh(), 30000);
+    const interval = setInterval(() => {
+      router.reload({ only: ["users", "totalOnline"], preserveScroll: true });
+    }, 40000);
+
     return () => clearInterval(interval);
   }, []);
 
-  const handleManualRefresh = () => {
-    setIsRefreshing(true);
-    router.reload({
-      only: ["users"],
-      onFinish: () => setIsRefreshing(false),
-      preserveScroll: true,
-    });
+  // Helper hitung durasi
+  const timeAgo = (date) => {
+    if (!date) return "-";
+    const diff = Math.floor((new Date() - new Date(date)) / 1000);
+    if (diff < 60) return `${diff} detik lalu`;
+    return `${Math.floor(diff / 60)} menit lalu`;
   };
-
-  const handleForceLogout = (userId) => {
-    if (confirm("Keluarkan user ini secara paksa?")) {
-      router.post(
-        route("admin.users.force-logout", userId),
-        {},
-        {
-          onSuccess: () => alert("User berhasil dikeluarkan."),
-        }
-      );
-    }
-  };
-
-  const columns = [
-    {
-      label: "Pengguna",
-      key: "name",
-      render: (val, row) => (
-        <UserInfo name={val} lastActivity={row.last_activity} />
-      ),
-    },
-    {
-      label: "NPM",
-      key: "npm",
-      render: (val) => (
-        <span className="font-mono text-sm text-gray-600 font-bold">{val}</span>
-      ),
-    },
-    {
-      label: "Alamat IP",
-      key: "ip_address",
-      render: (val) => (
-        <code className="font-mono text-[11px] bg-gray-50 px-2 py-1 rounded border border-gray-200 text-gray-500">
-          {val || "127.0.0.1"}
-        </code>
-      ),
-    },
-  ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden text-left">
-      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div className="p-2.5">
-            <span className="material-icons">sensors</span>
+            <Wifi className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">
-              Status Online
+              Pengguna Online
             </h1>
-            <p className="text-[11px] text-gray-500 font-semibold">
-              Real-time Monitoring
+            <p className="text-[11px] text-gray-500 font-semibold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+              {/* Sekarang variabel ini sudah dikenali */}
+              {totalOnline || 0} pengguna aktif saat ini
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleManualRefresh}
-          loading={isRefreshing}
-          className="bg-blue-600 text-xs">
-          Muat Ulang Data
-        </Button>
+
+        {/* Indikator Refresh */}
+        <div className="text-[10px] text-gray-400 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded border border-gray-100">
+          <RefreshCw className="w-3 h-3" />
+          Auto-refresh: 40s
+        </div>
       </div>
 
-      <div className="p-8">
-        <OnlineStats count={users.length} />
+      <div className="p-6">
+        <Table
+          data={users.data || []}
+          emptyMessage="Tidak ada pengguna ditemukan."
+          columns={[
+            {
+              label: "Nama Pengguna",
+              key: "name",
+              className: "font-semibold",
+              render: (val, row) => (
+                <div>
+                  <div className="text-gray-900">{val}</div>
+                  <div className="text-[10px] text-gray-400 font-mono">
+                    {row.npm || row.email}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              label: "Role",
+              key: "role",
+              className: "text-center",
+              render: (role) => (
+                <span className="text-[10px] font-bold uppercase text-gray-500 bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                  {role}
+                </span>
+              ),
+            },
+            // --- KOLOM STATUS ---
+            {
+              label: "Status",
+              key: "is_online",
+              className: "text-center",
+              render: (isOnline) => (
+                <div className="flex justify-center">
+                  {isOnline ? (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-bold bg-green-100 rounded-lg text-green-600 animate-pulse">
+                      Online
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold text-gray-500">
+                      Offline
+                    </span>
+                  )}
+                </div>
+              ),
+            },
+            {
+              label: "Aktivitas Terakhir",
+              key: "last_activity",
+              className: "text-right text-xs text-gray-500",
+              render: (date, row) => {
+                if (!row.is_online || !date)
+                  return <span className="text-gray-300">-</span>;
+                return (
+                  <span className="text-green-700 font-medium">
+                    {timeAgo(date)}
+                  </span>
+                );
+              },
+            },
+          ]}
+        />
 
-        <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-inner">
-          <Table
-            columns={columns}
-            data={users}
-            emptyMessage="Tidak ada pengguna yang online."
-            renderActions={(user) => (
-              <button
-                onClick={() => handleForceLogout(user.id)}
-                className="text-red-600 hover:bg-red-50 px-3 py-1 rounded-lg text-xs transition-all">
-                Logout Paksa
-              </button>
-            )}
-          />
-        </div>
-
-        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
-          <span className="material-icons text-amber-500">warning</span>
-          <p className="text-xs text-amber-800 font-medium italic">
-            Fitur Logout Paksa memutus sesi secara instan. Gunakan dengan bijak
-            untuk menjaga integritas ujian.
-          </p>
+        <div className="mt-4">
+          {users.links && <Pagination links={users.links} />}
         </div>
       </div>
     </div>

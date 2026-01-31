@@ -2,20 +2,18 @@ import React from "react";
 import Input from "@/Components/UI/Input";
 
 export default function UserForm({ data, setData, errors, groups }) {
-  // Logic pembatasan: Mahasiswa hanya boleh memilih 1 Group
   const handleGroupChange = (groupId) => {
     const isSelected = data.groups.includes(groupId);
 
     if (isSelected) {
-      // Jika sudah terpilih, maka hapus dari array (uncheck)
+      // Jika sudah terpilih, hapus dari array (Uncheck)
       setData(
         "groups",
         data.groups.filter((id) => id !== groupId),
       );
     } else {
-      // Jika belum terpilih, timpa array dengan ID baru (Single Choice)
-      // Ini untuk 1 ID grup di dalam array data.groups
-      setData("groups", [groupId]);
+      // kita gunakan spread operator agar data lama tidak hilang
+      setData("groups", [...data.groups, groupId]);
     }
   };
 
@@ -53,7 +51,6 @@ export default function UserForm({ data, setData, errors, groups }) {
           Target Grup / Angkatan Mahasiswa
         </label>
 
-        {/* Grid sistem untuk pilihan grup */}
         <div className="grid grid-cols-2 gap-2">
           {groups.map((group) => (
             <label
@@ -82,7 +79,7 @@ export default function UserForm({ data, setData, errors, groups }) {
         </div>
 
         <p className="mt-3 text-[9px] text-gray-400 font-medium italic">
-          * Mahasiswa hanya dapat terdaftar dalam satu grup aktif.
+          * Mahasiswa dapat terdaftar dalam beberapa grup sekaligus.
         </p>
 
         {errors.groups && (
