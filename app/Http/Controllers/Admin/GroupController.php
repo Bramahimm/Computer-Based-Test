@@ -32,14 +32,15 @@ class GroupController extends Controller {
 
     public function store(Request $request) {
         $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        Group::create($request->only('name', 'description'));
+        Group::create($request->all());
 
-        return redirect()->route('admin.groups.index')
-            ->with('success', 'Angkatan berhasil ditambahkan');
+        return redirect()
+            ->route('admin.users.index', ['section' => 'groups'])
+            ->with('success', 'Grup berhasil dibuat.'); // Flash message aman
     }
 
     public function show(Group $group) {
@@ -56,20 +57,20 @@ class GroupController extends Controller {
 
     public function update(Request $request, Group $group) {
         $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        $group->update($request->only('name', 'description'));
-
-        return redirect()->route('admin.groups.index')
-            ->with('success', 'Angkatan berhasil diperbarui');
+        $group->update($request->all());
+        return redirect()
+            ->route('admin.users.index', ['section' => 'groups'])
+            ->with('success', 'Grup berhasil diperbarui.');
     }
 
     public function destroy(Group $group) {
         $group->delete();
-
-        return redirect()->route('admin.groups.index')
-            ->with('success', 'Angkatan berhasil dihapus');
+        return redirect()
+            ->route('admin.users.index', ['section' => 'groups'])
+            ->with('success', 'Grup berhasil dihapus.');
     }
 }

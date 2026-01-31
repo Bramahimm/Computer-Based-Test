@@ -60,9 +60,9 @@ export default function Management({ users, onAddClick, onEditClick }) {
       {/* header section */}
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="p-2.5">
-              <span className="material-icons">people</span>
+              <span className="material-icons">person</span>
             </div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
@@ -78,6 +78,7 @@ export default function Management({ users, onAddClick, onEditClick }) {
           <Button
             onClick={onAddClick}
             className="bg-green-600 hover:bg-green-700 text-white font-medium px-[0.7rem] py-2 text-sm transition-colors flex items-center gap-2">
+            <span className="material-icons text-base">person_add</span>{" "}
             <span>Tambah Mahasiswa</span>
           </Button>
         </div>
@@ -97,15 +98,16 @@ export default function Management({ users, onAddClick, onEditClick }) {
             {
               label: "NPM",
               key: "npm",
-              className: "font-mono text-sm",
+              className: "text-sm",
             },
             {
               label: "Nama",
               key: "name",
-              className: "font-semibold",
+              className: "text-sm",
             },
             {
               label: "Grup",
+              className: "text-sm",
               key: "groups",
               render: (g) =>
                 g && g.length > 0 ? (
@@ -116,11 +118,11 @@ export default function Management({ users, onAddClick, onEditClick }) {
             },
             // kolom aksi yang udah direfactor
             {
-              label: "",
+              label: "Aksi",
               key: "actions",
-              className: "text-right",
+              className: "text-center",
               render: (_, user) => (
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-center gap-2">
                   <Button
                     type="button"
                     variant="outline"

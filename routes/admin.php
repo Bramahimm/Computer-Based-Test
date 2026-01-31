@@ -26,14 +26,15 @@ Route::middleware([
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('dashboard');
 
-    // =========================================================
-    // 🔥 ROUTE IMPORT (WAJIB DITARUH PALING ATAS) 🔥
-    // =========================================================
-
     // 1. Import Users
     Route::get('/users/import', [ImportUserController::class, 'create'])->name('users.import.view');
+
     Route::post('/import/users', [ImportUserController::class, 'store'])->name('import.users');
+
     Route::get('/users/import/template', [ImportUserController::class, 'downloadTemplate'])->name('import.template');
+
+    Route::post('/users/assign-groups', [UserController::class, 'assignGroups'])
+        ->name('users.assign-groups');
 
     // 2. Import Questions (PINDAHKAN KE SINI - SEBELUM RESOURCE)
     Route::get('/questions/import', [ImportQuestionController::class, 'create'])->name('questions.import.view');
@@ -41,9 +42,6 @@ Route::middleware([
     Route::get('/questions/import/template', [ImportQuestionController::class, 'downloadTemplate'])->name('questions.import.template');
 
 
-    // =========================================================
-    // ROUTE RESOURCE (DITARUH DI BAWAHNYA)
-    // =========================================================
 
     Route::resource('users', UserController::class);
     Route::resource('modules', ModuleController::class);
@@ -56,9 +54,6 @@ Route::middleware([
     Route::resource('groups', GroupController::class);
 
 
-    // =========================================================
-    // HASIL & MONITORING
-    // =========================================================
 
     // Result & Validation
     Route::get('/results', [ResultController::class, 'index'])

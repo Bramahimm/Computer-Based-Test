@@ -48,32 +48,34 @@ class UserController extends Controller {
     }
 
     // logic buat nampilin siapa aja yang lagi online
-    private function handleOnline(Request $request) {
-        // ambil data user yang rolenya peserta aja
-        $users = User::where('role', 'peserta')
-            ->select('id', 'name', 'npm', 'email')
-            ->get()
-            ->map(function ($user) {
-                // cek di cache, ada gak key user ini
-                $isOnline = Cache::has('user-is-online-' . $user->id);
+private function handleOnline(Request $request)
+    {
+        $users = User::select('id', 'name', 'npm', 'role', 'email')
+            ->orderBy('name', 'asc')
+            ->paginate(10)
+            ->withQueryString();
 
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'npm' => $user->npm,
-                    'is_online' => $isOnline,
-                    'last_seen' => $isOnline ? 'Sedang Aktif' : 'Offline'
-                ];
-            })
-            // saring cuma user yang status onlinenya true
-            ->filter(function ($user) {
-                return $user['is_online'] === true;
-            })
-            ->values();
+        $users->getCollection()->transform(function ($user) {
+            $cacheKey = 'user-online-' . $user->id;
+            $data = Cache::get($cacheKey);
+
+            $user->is_online = $data ? true : false;
+            $user->ip_address = $data['ip'] ?? '-';
+            $user->last_activity = $data['last_activity'] ?? null;
+            
+            return $user;
+        });
+
+        $allUserIds = User::pluck('id'); 
+        
+        $totalOnlineCount = $allUserIds->filter(function ($id) {
+            return Cache::get('user-online-' . $id) !== null;
+        })->count();
 
         return inertia('Admin/Users/Index', [
             'section' => 'online',
-            'onlineUsers' => $users,
+            'users' => $users,
+            'totalOnline' => $totalOnlineCount,
         ]);
     }
 
@@ -98,11 +100,32 @@ class UserController extends Controller {
 
         return inertia('Admin/Users/Index', [
             'section' => 'selection',
-            // PERBAIKAN: Ganti withQueryString() dengan appends() biar anti-error
+            // pake withQueryString dengan appends biar gada error
             'users' => $query->paginate(50)->appends($request->query()),
             'groups' => Group::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'group_id']),
         ]);
+    }
+
+    public function assignGroups(Request $request) {
+        //Validasi Input
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'group_ids' => 'required|array|min:1',
+        ]);
+
+        // Eksekusi Massal
+        $users = User::whereIn('id', $request->user_ids)->get();
+
+        DB::transaction(function () use ($users, $request) {
+            foreach ($users as $user) {
+                // syncWithoutDetaching agar grup lama ga ilang
+                $user->groups()->syncWithoutDetaching($request->group_ids);
+            }
+        });
+
+        return redirect()->route('admin.users.index', ['section' => 'selection'])
+            ->with('success', count($users) . ' pengguna berhasil ditambahkan ke grup baru.');
     }
 
     // logic buat nampilin rapor atau hasil individu
