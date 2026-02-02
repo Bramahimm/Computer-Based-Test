@@ -181,28 +181,31 @@ export default function Management({
         title={editMode ? "Edit Ujian" : "Tambah Ujian"}
         size="lg">
         <form onSubmit={handleSubmit} className="p-1">
+          {/* WRAPPING TOMBOL KE DALAM TESTFORM */}
           <TestForm
             data={data}
             setData={setData}
             errors={errors}
             groups={groups}
             topics={topics}
-            modules={modules}
-          />
-          <div className="flex justify-end gap-3 pt-6 border-t mt-10">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}>
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              loading={processing}
-              className="bg-green-600 px-8 text-white">
-              Simpan
-            </Button>
-          </div>
+            modules={modules}>
+            {/* ANAK (CHILDREN) MULAI DISINI */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}>
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                loading={processing}
+                className="bg-green-600 px-8 text-white">
+                Simpan
+              </Button>
+            </div>
+            {/* ANAK SELESAI */}
+          </TestForm>
         </form>
       </Modal>
     </div>

@@ -48,8 +48,7 @@ class UserController extends Controller {
     }
 
     // logic buat nampilin siapa aja yang lagi online
-private function handleOnline(Request $request)
-    {
+    private function handleOnline(Request $request) {
         $users = User::select('id', 'name', 'npm', 'role', 'email')
             ->orderBy('name', 'asc')
             ->paginate(10)
@@ -62,12 +61,12 @@ private function handleOnline(Request $request)
             $user->is_online = $data ? true : false;
             $user->ip_address = $data['ip'] ?? '-';
             $user->last_activity = $data['last_activity'] ?? null;
-            
+
             return $user;
         });
 
-        $allUserIds = User::pluck('id'); 
-        
+        $allUserIds = User::pluck('id');
+
         $totalOnlineCount = $allUserIds->filter(function ($id) {
             return Cache::get('user-online-' . $id) !== null;
         })->count();

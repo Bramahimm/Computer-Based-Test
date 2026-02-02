@@ -57,11 +57,11 @@ export default function Online({ users, totalOnline }) {
             {
               label: "Nama Pengguna",
               key: "name",
-              className: "font-semibold",
+              className: "text-sm",
               render: (val, row) => (
                 <div>
-                  <div className="text-gray-900">{val}</div>
-                  <div className="text-[10px] text-gray-400 font-mono">
+                  <div>{val}</div>
+                  <div className="text-[11px] text-gray-400">
                     {row.npm || row.email}
                   </div>
                 </div>
