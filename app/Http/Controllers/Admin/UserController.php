@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\User;
 use App\Models\Group;
 use App\Models\TestUser;
@@ -49,31 +50,50 @@ class UserController extends Controller {
 
     // logic buat nampilin siapa aja yang lagi online
     private function handleOnline(Request $request) {
-        $users = User::select('id', 'name', 'npm', 'role', 'email')
-            ->orderBy('name', 'asc')
-            ->paginate(10)
-            ->withQueryString();
+        // butuh semua data dulu untuk menentukan siapa yang online di seluruh database
+        $allUsers = User::select('id', 'name', 'npm', 'role', 'email')->get();
 
-        $users->getCollection()->transform(function ($user) {
+        // Mapping & Inject Data dari cache, validasi 1 Kali
+        // Kita hitung timestamp aktivitasnya untuk bahan sorting
+        $processedUsers = $allUsers->map(function ($user) {
             $cacheKey = 'user-online-' . $user->id;
             $data = Cache::get($cacheKey);
 
             $user->is_online = $data ? true : false;
             $user->ip_address = $data['ip'] ?? '-';
             $user->last_activity = $data['last_activity'] ?? null;
+            
+            // Konversi waktu ke timestamp angka agar mudah disortir , 0 kalo offline
+            $user->sort_time = $data && isset($data['last_activity']) 
+                ? strtotime($data['last_activity']) 
+                : 0;
 
             return $user;
         });
 
-        $allUserIds = User::pluck('id');
+        // Sorting server side supaya yang terakhir online bakal ditaruh diatas
+        $sortedUsers = $processedUsers->sortByDesc('sort_time')->values();
 
-        $totalOnlineCount = $allUserIds->filter(function ($id) {
-            return Cache::get('user-online-' . $id) !== null;
-        })->count();
+        // Hitung Total Online untuk Badge Frontend
+        $totalOnlineCount = $sortedUsers->where('is_online', true)->count();
+
+        $perPage = 10;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $currentItems = $sortedUsers->slice(($currentPage - 1) * $perPage, $perPage)->values()->all();
+        $paginatedUsers = new LengthAwarePaginator(
+            $currentItems, 
+            $sortedUsers->count(), 
+            $perPage, 
+            $currentPage, 
+            [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'query' => $request->query(),
+            ]
+        );
 
         return inertia('Admin/Users/Index', [
             'section' => 'online',
-            'users' => $users,
+            'users' => $paginatedUsers,
             'totalOnline' => $totalOnlineCount,
         ]);
     }

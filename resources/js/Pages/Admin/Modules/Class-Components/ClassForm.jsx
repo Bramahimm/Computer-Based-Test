@@ -40,7 +40,7 @@ export default function ClassForm({ isOpen, onClose, onSubmit, initialData }) {
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="w-full border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-            placeholder="Contoh: Blok 1 - Biomedik Dasar"
+            placeholder="Contoh: Biomedik Dasar"
           />
         </div>
 
