@@ -65,7 +65,7 @@ export default function Questions({ modules = [], topics = [], questions = null,
     const questionList = questions?.data || [];
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 duration-500">
             
             {/* --- SECTION 1: FILTER BAR --- */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 relative overflow-hidden">

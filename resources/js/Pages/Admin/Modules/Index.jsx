@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Head, usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 
-import ClassPage from "./Class";
+import Class from "./Class";
 import Questions from "./Questions";
 import Topic from "./Topic";
 import Results from "./Results";
@@ -19,7 +19,7 @@ export default function Index(props) {
   const renderSection = () => {
     switch (section) {
       case "class":
-        return <ClassPage {...props} />;
+        return <Class {...props} />;
 
       case "questions":
         return <Questions {...props} />;
@@ -34,7 +34,7 @@ export default function Index(props) {
         return <ImportPage {...props} />;
 
       default:
-        return <ClassPage {...props} />;
+        return <Class {...props} />;
     }
   };
 
@@ -43,7 +43,7 @@ export default function Index(props) {
       <Head title={`Modules - ${section}`} />
 
       <div className="space-y-6">
-        <div key={section} className="animate-in fade-in duration-300">
+        <div key={section}>
           {renderSection()}
         </div>
       </div>

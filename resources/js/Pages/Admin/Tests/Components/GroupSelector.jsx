@@ -90,7 +90,7 @@ export default function GroupSelector({
 
       {isOpen && (
         <div
-          className={`absolute z-[150] w-full bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in duration-200 ${
+          className={`absolute z-[150] w-full bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden animate-in  duration-200 ${
             dropUp
               ? "bottom-full mb-2 slide-in-from-bottom-2"
               : "top-full mt-2 slide-in-from-top-2"

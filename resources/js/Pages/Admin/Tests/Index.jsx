@@ -35,7 +35,7 @@ export default function Index(props) {
     <AdminLayout>
       <Head title={`Tests - ${section.toUpperCase()}`} />
 
-      <div key={section} className="animate-in fade-in zoom-in-95 duration-300">
+      <div key={section} className="zoom-in-95 duration-300">
         {renderContent()}
       </div>
     </AdminLayout>
