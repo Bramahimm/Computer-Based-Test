@@ -16,7 +16,12 @@ class Test extends Model
         'start_time',
         'end_time',
         'is_active',
+        'results_to_users',
     ];
+
+    // ==========================================
+    // 🔥 RELASI UTAMA (DATABASE)
+    // ==========================================
 
     // Ujian ↔ Topik
     public function topics()
@@ -25,7 +30,6 @@ class Test extends Model
             ->withPivot([
                 'total_questions',
                 'question_type',
-                // 🔥 WAJIB DITAMBAHKAN AGAR SETTINGAN TERBACA 🔥
                 'random_questions',
                 'random_answers',
                 'max_answers',
@@ -40,10 +44,21 @@ class Test extends Model
         return $this->belongsToMany(Group::class, 'test_groups');
     }
 
-    // Ujian → Peserta yang ikut
+    // Ujian → Peserta
     public function testUsers()
     {
         return $this->hasMany(TestUser::class);
     }
-    
+
+    /**
+     * Accessor untuk memanggil $test->questions
+     * Menggabungkan semua soal dari topik-topik yang ada di ujian ini.
+     */
+    public function getQuestionsAttribute()
+    {
+        // Pastikan topik sudah di-load untuk performa terbaik
+        return $this->topics->flatMap(function ($topic) {
+            return $topic->questions;
+        });
+    }
 }

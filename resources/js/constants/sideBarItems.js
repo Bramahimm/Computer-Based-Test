@@ -107,7 +107,7 @@ export const SideBarItems = [
       {
         name: "Lihat Pengguna",
         route: "admin.tests.index",
-        params: { section: "questions" },
+        params: { section: "analitics" },
       },
       {
         name: "Statistik Ujian",

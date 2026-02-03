@@ -3,7 +3,6 @@ import React from "react";
 export default function BehaviorTab({ data, setData }) {
   const toggles = [
     { label: "Tampilkan Hasil ke Peserta", key: "results_to_users" },
-    { label: "Tampilkan Laporan Detail", key: "reports_to_users" },
   ];
 
   return (

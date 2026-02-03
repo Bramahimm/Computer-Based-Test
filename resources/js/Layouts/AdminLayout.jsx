@@ -27,7 +27,7 @@ export default function AdminLayout({ children, title }) {
           </div>
           
           <footer className="py-8 text-center text-xs text-blue-600/60 border-t mt-12">
-            CBT Ilmu Komputer - Fakultas Kedokteran
+            Sistem CBT  - Fakultas Kedokteran
           </footer>
         </main>
       </div>

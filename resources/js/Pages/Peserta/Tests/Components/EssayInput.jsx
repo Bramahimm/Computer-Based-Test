@@ -12,26 +12,30 @@ export default function EssayInput({ question, selectedAnswer, testUserId, onAns
         }
     }, [selectedAnswer]);
 
-    const handleSave = async () => {
-        // Jangan simpan jika tidak ada perubahan
-        if (text === selectedAnswer?.answerText) return;
+    // EssayInput.jsx
 
-        setStatus("saving");
-        onAnswer({ answerText: text }); // Update parent state
+const handleSave = async () => {
+    if (text === selectedAnswer?.answerText) return;
 
-        try {
-            await axios.post(route("peserta.tests.answer", testUserId), {
-                question_id: question.id,
-                answer_text: text,
-            });
-            setStatus("saved");
-            // Hilangkan status 'Tersimpan' setelah 2 detik
-            setTimeout(() => setStatus("idle"), 2000);
-        } catch (error) {
-            console.error(error);
-            setStatus("error");
-        }
-    };
+    setStatus("saving");
+    onAnswer({ answerText: text });
+
+    try {
+        // PERBAIKAN: Gunakan format objek untuk parameter testUser 
+        // dan pastikan parameter name sesuai dengan {testUser} di web.php
+        await axios.post(route("peserta.tests.answer", { testUser: testUserId }), {
+            question_id: question.id,
+            answer_text: text,
+            answer_id: null // Tambahkan secara eksplisit null untuk essay
+        });
+        
+        setStatus("saved");
+        setTimeout(() => setStatus("idle"), 2000);
+    } catch (error) {
+        console.error(error);
+        setStatus("error");
+    }
+};
 
     return (
         <div className="space-y-2">

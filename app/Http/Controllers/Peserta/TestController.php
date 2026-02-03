@@ -8,19 +8,18 @@ use App\Models\Test;
 use App\Models\TestUser;
 use App\Services\CBT\AnswerService;
 use App\Services\CBT\ExamStateService;
+// 🔥 PASTIKAN IMPORT INI BENAR (MENGARAH KE CBT)
 use App\Services\CBT\ExamTimeService;
 use App\Services\CBT\QuestionGeneratorService;
 use App\Services\CBT\ScoringService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request; // 🔥 Tambahkan ini untuk handle request update progress
+use Illuminate\Http\Request;
 use App\Models\Answer;
 use App\Models\Question;
+use Illuminate\Support\Facades\DB;
 
 class TestController extends Controller
 {
-    /**
-     * List ujian dengan Sorting Prioritas
-     */
     public function index()
     {
         $user = Auth::user();
@@ -39,7 +38,6 @@ class TestController extends Controller
                 $status = 'KERJAKAN';
                 $priority = 2;
 
-                // 1. Cek Status Spesifik User
                 if ($testUser) {
                     if ($testUser->status == 'submitted') {
                         $status = 'SELESAI';
@@ -56,9 +54,7 @@ class TestController extends Controller
                             $priority = 1;
                         }
                     }
-                }
-                // 2. Cek Status Global
-                else {
+                } else {
                     if ($now < $test->start_time) {
                         $status = 'BELUM_MULAI';
                         $priority = 3;
@@ -84,19 +80,14 @@ class TestController extends Controller
         return inertia('Peserta/Tests/Index', compact('tests'));
     }
 
-    /**
-     * Mulai ujian
-     */
     public function start(Test $test)
     {
         $user = Auth::user();
 
-        // Cek Waktu Global
         if (now() > $test->end_time) {
             return redirect()->route('peserta.tests.index')->withErrors('Waktu habis.');
         }
 
-        // Create or Get Session
         $testUser = TestUser::firstOrCreate(
             ['test_id' => $test->id, 'user_id' => $user->id],
             ['started_at' => now(), 'status' => 'ongoing']
@@ -106,19 +97,20 @@ class TestController extends Controller
             $testUser->update(['started_at' => now(), 'status' => 'ongoing']);
         }
 
-        // 🔥 UPDATE ACTIVITY: Catat bahwa user sedang aktif sekarang
         $testUser->update(['last_activity_at' => now()]);
 
-        // Cek Expired
         ExamStateService::autoExpire($testUser);
         if ($testUser->status === 'expired' || $testUser->status === 'submitted') {
             return redirect()->route('peserta.dashboard')->withErrors('Akses ditutup.');
         }
 
-        // Ambil Soal
+        if ($testUser->is_locked) {
+            return redirect()->route('peserta.dashboard')
+                ->withErrors(['error' => 'Akun ujian Anda dikunci: ' . ($testUser->lock_reason ?? 'Hubungi pengawas.')]);
+        }
+
         $questions = QuestionGeneratorService::getQuestions($test, $user->id);
 
-        // Ambil Jawaban Existing
         $existingAnswers = $testUser->answers()
             ->select('question_id', 'answer_id', 'answer_text')
             ->get()
@@ -135,24 +127,29 @@ class TestController extends Controller
             'test' => $test,
             'testUserId' => $testUser->id,
             'questions' => $questions,
+            // 👇 Disini sudah benar panggil ExamTimeService
             'remainingSeconds' => ExamTimeService::remainingSeconds($testUser),
             'existingAnswers' => $existingAnswers,
             'currentUser' => $user,
-
-            // 🔥 DATA POSISI SOAL: Dikirim ke Frontend agar bisa resume
             'lastIndex' => $testUser->current_index ?? 0,
         ]);
     }
 
-    /**
-     * 🔥 NEW: Update Progress (Posisi Soal)
-     * Dipanggil via Axios saat user klik Next/Prev
-     */
     public function updateProgress(Request $request, TestUser $testUser)
     {
-        // Security Check: Pastikan user yang login adalah pemilik ujian ini
         if ($testUser->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($testUser->status !== 'ongoing') {
+            return response()->json(['status' => 'stopped', 'message' => 'Ujian telah berakhir'], 403);
+        }
+
+        if ($testUser->is_locked) {
+            return response()->json([
+                'status' => 'locked',
+                'message' => 'Ujian Anda sedang dikunci oleh pengawas.'
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -160,26 +157,28 @@ class TestController extends Controller
             'question_id' => 'nullable|exists:questions,id'
         ]);
 
-        // Update tracking columns di tabel test_users
         $testUser->update([
             'current_index' => $validated['index'],
             'last_question_id' => $validated['question_id'] ?? null,
-            'last_activity_at' => now() // Update timestamp aktivitas
+            'last_activity_at' => now()
         ]);
 
         return response()->json(['status' => 'saved']);
     }
 
-    /**
-     * Simpan Jawaban
-     */
-
     public function answer(SaveAnswerRequest $request, TestUser $testUser)
     {
         ExamStateService::autoExpire($testUser);
 
-        if ($testUser->status === 'expired') {
-            return response()->json(['status' => 'expired'], 403);
+        if ($testUser->status !== 'ongoing') {
+            return response()->json(['status' => 'error', 'message' => 'Ujian telah berakhir.'], 403);
+        }
+
+        if ($testUser->is_locked) {
+            return response()->json([
+                'status' => 'locked',
+                'message' => 'Ujian Anda sedang dikunci oleh pengawas.'
+            ], 403);
         }
 
         $data = $request->validated();
@@ -187,55 +186,111 @@ class TestController extends Controller
         $isCorrect = null;
         $score = null;
 
+        // Logika Scoring hanya untuk Multiple Choice (jika ada answer_id)
         if (!empty($data['answer_id'])) {
-            // ambil jawaban master
             $answer = Answer::find($data['answer_id']);
-
             if ($answer) {
                 $isCorrect = (bool) $answer->is_correct;
-
                 if ($isCorrect) {
                     $question = Question::find($data['question_id']);
                     $score = $question?->score ?? 0;
                 } else {
                     $score = 0;
-                    }
+                }
             }
         }
+        // Jika Essay (answer_id kosong tapi answer_text ada)
+        // isCorrect dan score tetap null agar nanti bisa dinilai manual oleh admin
+        else if (!empty($data['answer_text'])) {
+            $isCorrect = null;
+            $score = null;
+        }
 
-    AnswerService::save(
-        $testUser->id,
-        $data['question_id'],
-        $data['answer_id'] ?? null,
-        $data['answer_text'] ?? null,
-        $isCorrect,
-        $score
-    );
+        // Pindahkan AnswerService::save ke luar IF agar Essay tetap tersimpan
+        AnswerService::save(
+            $testUser->id,
+            $data['question_id'],
+            $data['answer_id'] ?? null,
+            $data['answer_text'] ?? null,
+            $isCorrect,
+            $score
+        );
 
-    $testUser->update(['last_activity_at' => now()]);
+        $testUser->update(['last_activity_at' => now()]);
 
-    return response()->json(['status' => 'saved']);
-}
+        return response()->json(['status' => 'saved']);
+    }
 
-    /**
-     * Selesai Ujian
-     */
     public function submit(TestUser $testUser)
     {
+        if ($testUser->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         $testUser->update([
             'status' => 'submitted',
             'finished_at' => now()
         ]);
 
         $totalScore = ScoringService::calculate($testUser);
+        $test = $testUser->test;
+        $status = $test->results_to_users ? 'validated' : 'pending';
 
         $testUser->result()->create([
-            'total_score' => $totalScore,
-            'status' => 'pending'
+            'total_score'  => $totalScore,
+            'status'       => $status,
+            'validated_at' => $status === 'validated' ? now() : null,
+            'validated_by' => $status === 'validated' ? auth()->id() : null,
         ]);
 
-        QuestionGeneratorService::clear($testUser->test_id, $testUser->user_id);
+        QuestionGeneratorService::clear(
+            $testUser->test_id,
+            $testUser->user_id
+        );
 
-        return redirect()->route('peserta.dashboard')->with('success', 'Ujian berhasil diselesaikan.');
+        return redirect()
+            ->route('peserta.dashboard')
+            ->with('success', 'Ujian berhasil diselesaikan.');
+    }
+
+    /**
+     * Cek Status & Sisa Waktu (Polling)
+     */
+    public function checkStatus(TestUser $testUser)
+    {
+        if ($testUser->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $testUser->refresh();
+
+        // 1. Cek Kunci
+        if ($testUser->is_locked) {
+            return response()->json([
+                'status' => 'locked',
+                'force_stop' => true,
+                'message' => 'Ujian Anda dikunci sementara oleh pengawas. Alasan: ' . ($testUser->lock_reason ?? 'Hubungi Pengawas')
+            ]);
+        }
+
+        // 2. Cek Selesai
+        if ($testUser->status === 'submitted' || $testUser->status === 'expired') {
+            return response()->json([
+                'status' => $testUser->status,
+                'force_stop' => true,
+                'message' => 'Ujian telah selesai atau dihentikan oleh pengawas.'
+            ]);
+        }
+
+        // 3. Hitung Waktu
+        // 🔥 PERBAIKAN DI SINI: Hapus '\App\Services\' agar pakai 'use' di atas
+        $remaining = ExamTimeService::remainingSeconds($testUser);
+
+        return response()->json([
+            'status' => 'ongoing',
+            'remaining_seconds' => $remaining,
+            'server_time' => now()->toTimeString(),
+            'extra_time' => $testUser->extra_time
+        ]);
     }
 }

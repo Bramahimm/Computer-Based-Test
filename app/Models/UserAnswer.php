@@ -14,8 +14,8 @@ class UserAnswer extends Model
         'question_id',
         'answer_id',
         'answer_text',
-        'score',
-        'is_correct',
+        'is_correct', // Menyimpan status Benar (1) atau Salah (0)
+        'score',      // Menyimpan Bobot Nilai Soal
     ];
 
     // Jawaban → TestUser

@@ -4,14 +4,26 @@ import { Clock, AlertTriangle } from 'lucide-react';
 export default function Timer({ initialSeconds, onExpire }) {
     const [seconds, setSeconds] = useState(initialSeconds);
 
+    // 🔥 PERBAIKAN UTAMA DI SINI 🔥
+    // Fungsi ini mendeteksi jika 'initialSeconds' berubah (karena Admin menambah waktu)
+    // Lalu memaksa state 'seconds' untuk update mengikuti waktu baru tersebut.
+    useEffect(() => {
+        setSeconds(initialSeconds);
+    }, [initialSeconds]);
+
+    // Logic Hitung Mundur (Tetap sama)
     useEffect(() => {
         if (seconds <= 0) {
-            onExpire();
+            onExpire(); // Panggil fungsi selesai jika waktu habis
             return;
         }
-        const interval = setInterval(() => setSeconds(s => s - 1), 1000);
+        
+        const interval = setInterval(() => {
+            setSeconds(prev => Math.max(0, prev - 1)); // Pakai prev agar lebih akurat & tidak minus
+        }, 1000);
+
         return () => clearInterval(interval);
-    }, [seconds]);
+    }, [seconds, onExpire]); // Dependency diperbaiki
 
     const format = (s) => {
         const h = Math.floor(s / 3600).toString().padStart(2, '0');

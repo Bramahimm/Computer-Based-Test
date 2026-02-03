@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Admin\GroupController;
 
-class UserController extends Controller {
+class UserController extends Controller
+{
 
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $section = $request->input('section', 'management');
 
         if ($section === 'online') {
@@ -39,7 +41,8 @@ class UserController extends Controller {
         return $this->handleManagement($request);
     }
 
-    private function handleGroups(Request $request) {
+    private function handleGroups(Request $request)
+    {
         $groups = GroupController::getGroupData($request);
         return inertia('Admin/Users/Index', [
             'section' => 'groups',
@@ -48,8 +51,8 @@ class UserController extends Controller {
         ]);
     }
 
-    // logic buat nampilin siapa aja yang lagi online
-    private function handleOnline(Request $request) {
+    private function handleOnline(Request $request)
+    {
         // butuh semua data dulu untuk menentukan siapa yang online di seluruh database
         $allUsers = User::select('id', 'name', 'npm', 'role', 'email')->get();
 
@@ -62,10 +65,10 @@ class UserController extends Controller {
             $user->is_online = $data ? true : false;
             $user->ip_address = $data['ip'] ?? '-';
             $user->last_activity = $data['last_activity'] ?? null;
-            
+
             // Konversi waktu ke timestamp angka agar mudah disortir , 0 kalo offline
-            $user->sort_time = $data && isset($data['last_activity']) 
-                ? strtotime($data['last_activity']) 
+            $user->sort_time = $data && isset($data['last_activity'])
+                ? strtotime($data['last_activity'])
                 : 0;
 
             return $user;
@@ -81,10 +84,10 @@ class UserController extends Controller {
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $currentItems = $sortedUsers->slice(($currentPage - 1) * $perPage, $perPage)->values()->all();
         $paginatedUsers = new LengthAwarePaginator(
-            $currentItems, 
-            $sortedUsers->count(), 
-            $perPage, 
-            $currentPage, 
+            $currentItems,
+            $sortedUsers->count(),
+            $perPage,
+            $currentPage,
             [
                 'path' => LengthAwarePaginator::resolveCurrentPath(),
                 'query' => $request->query(),
@@ -99,7 +102,8 @@ class UserController extends Controller {
     }
 
     // logic buat nampilin tabel seleksi massal
-    private function handleSelection(Request $request) {
+    private function handleSelection(Request $request)
+    {
         $query = User::with('groups')
             ->where('role', 'peserta')
             ->latest();
@@ -125,8 +129,8 @@ class UserController extends Controller {
             'filters' => $request->only(['search', 'group_id']),
         ]);
     }
-
-    public function assignGroups(Request $request) {
+    public function assignGroups(Request $request)
+    {
         //Validasi Input
         $request->validate([
             'user_ids' => 'required|array|min:1',
@@ -148,7 +152,8 @@ class UserController extends Controller {
     }
 
     // logic buat nampilin rapor atau hasil individu
-    private function handleIndividualResult(Request $request) {
+    private function handleIndividualResult(Request $request)
+    {
         $selectedUserId = $request->input('user_id');
         $selectedGroupId = $request->input('group_id');
 
@@ -202,7 +207,8 @@ class UserController extends Controller {
     }
 
     // logic default buat crud user biasa
-    private function handleManagement(Request $request) {
+    private function handleManagement(Request $request)
+    {
         $query = User::with('groups')
             ->where('role', 'peserta')
             ->latest();
@@ -235,13 +241,15 @@ class UserController extends Controller {
         ]);
     }
 
-    public function create() {
+    public function create()
+    {
         return inertia('Admin/Users/Create', [
             'groups' => Group::all(),
         ]);
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $request->validate([
             'name' => 'required|string',
             'npm' => 'nullable|string|unique:users,npm',
@@ -250,11 +258,12 @@ class UserController extends Controller {
         ]);
 
         DB::transaction(function () use ($request) {
+            $password = $request->npm;
             $user = User::create([
                 'name' => $request->name,
                 'npm' => $request->npm,
                 'email' => $request->email,
-                'password' => Hash::make('password123'),
+                'password' => Hash::make($password),
                 'role' => 'peserta',
                 'is_active' => true,
             ]);
@@ -265,20 +274,23 @@ class UserController extends Controller {
             ->with('success', 'User peserta berhasil ditambahkan');
     }
 
-    public function show(User $user) {
+    public function show(User $user)
+    {
         return inertia('Admin/Users/Show', [
             'user' => $user->load('groups', 'testUsers.test'),
         ]);
     }
 
-    public function edit(User $user) {
+    public function edit(User $user)
+    {
         return inertia('Admin/Users/Edit', [
             'user' => $user,
             'groups' => Group::all(),
         ]);
     }
 
-    public function update(Request $request, User $user) {
+    public function update(Request $request, User $user)
+    {
         $request->validate([
             'name' => 'required|string',
             'npm' => 'nullable|string|unique:users,npm,' . $user->id,
@@ -292,7 +304,8 @@ class UserController extends Controller {
             ->with('success', 'User berhasil diperbarui');
     }
 
-    public function destroy(User $user) {
+    public function destroy(User $user)
+    {
         $user->delete();
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dihapus');

@@ -4,6 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TestUser;
+use Illuminate\Support\Carbon;
+use App\Models\Result;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\TestResultsExport;
 
 class TestUserController extends Controller
 {
@@ -23,8 +29,225 @@ class TestUserController extends Controller
                 'user',
                 'test',
                 'answers.question.answers',
-                'result'
+                'result',
+                'locker'
             ),
         ]);
+    }
+
+    /**
+     * Lock a single test user
+     */
+    public function lock(TestUser $testUser, Request $request)
+    {
+        $request->validate([
+            'lock_reason' => 'required|string|max:500',
+        ]);
+
+        $testUser->update([
+            'is_locked' => true,
+            'lock_reason' => $request->lock_reason,
+            'locked_by' => auth()->id(),
+            'locked_at' => now(),
+        ]);
+
+        return back()->with('success', 'Peserta berhasil dikunci!');
+    }
+
+    /**
+     * Unlock a single test user
+     */
+    public function unlock(TestUser $testUser)
+    {
+        $testUser->update([
+            'is_locked' => false,
+            'lock_reason' => null,
+            'locked_by' => null,
+            'locked_at' => null,
+        ]);
+
+        return back()->with('success', 'Peserta berhasil dibuka kunci!');
+    }
+
+    /**
+     * Add time for single user
+     */
+    public function addTime(TestUser $testUser, Request $request)
+    {
+        $validated = $request->validate([
+            'minutes' => 'required|integer|min:1|max:120',
+        ]);
+
+        $testUser->increment('extra_time', $validated['minutes']);
+
+        return back()->with('success', "Waktu ujian ditambah {$validated['minutes']} menit!");
+    }
+
+    /**
+     * Export Feature
+     */
+    public function export(Request $request)
+    {
+        $type = $request->query('type', 'excel');
+        $testId = $request->query('test_id');
+        $search = $request->query('search');
+        $sort = $request->query('sort', 'started_at');
+
+        if ($type === 'excel') {
+            return Excel::download(new TestResultsExport($testId, $search, $sort), 'hasil_ujian_' . date('Y-m-d_H-i') . '.xlsx');
+        }
+
+        if ($type === 'pdf') {
+            $query = TestUser::with(['user', 'test.topics.questions', 'answers', 'result'])
+                ->join('users', 'test_users.user_id', '=', 'users.id')
+                ->leftJoin('results', 'test_users.id', '=', 'results.test_user_id')
+                ->select('test_users.*');
+
+            if ($testId) $query->where('test_users.test_id', $testId);
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('users.name', 'like', "%{$search}%")
+                        ->orWhere('users.npm', 'like', "%{$search}%");
+                });
+            }
+
+            if ($sort === 'npm_asc') {
+                $query->orderBy('users.npm', 'asc');
+            } elseif ($sort === 'score_desc') {
+                $query->orderBy('results.total_score', 'desc');
+            } elseif ($sort === 'score_asc') {
+                $query->orderBy('results.total_score', 'asc');
+            } else {
+                $query->orderBy('test_users.started_at', 'desc');
+            }
+
+            $data = $query->get();
+
+            foreach ($data as $item) {
+                $totalQ = 0;
+                if ($item->test && $item->test->topics) {
+                    foreach ($item->test->topics as $topic) {
+                        $totalQ += $topic->questions->count();
+                    }
+                }
+
+                if ($totalQ > 0) {
+                    $correct = $item->answers->where('is_correct', 1)->count();
+                    $raw = ($correct / $totalQ) * 100;
+                    $item->custom_score = number_format($raw, 2, '.', '');
+                } else {
+                    $dbScore = $item->result->total_score ?? 0;
+                    $item->custom_score = number_format((float)$dbScore, 2, '.', '');
+                }
+            }
+
+            $pdf = Pdf::loadView('admin.exports.results_pdf', [
+                'data' => $data
+            ]);
+
+            return $pdf->download('laporan_hasil_ujian.pdf');
+        }
+    }
+
+    // =========================================================================
+    // 🔥 NEW BULK ACTIONS (Agar Tombol Massal Berfungsi)
+    // =========================================================================
+
+    /**
+     * Tambah Waktu Massal (Bulk Add Time)
+     */
+    public function bulkAddTime(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'minutes' => 'required|integer|min:1'
+        ]);
+
+        // increment() otomatis menambahkan nilai lama + nilai baru untuk semua ID terpilih
+        TestUser::whereIn('id', $request->ids)->increment('extra_time', $request->minutes);
+
+        return back()->with('success', 'Waktu berhasil ditambahkan untuk ' . count($request->ids) . ' peserta.');
+    }
+
+    /**
+     * Kunci Massal (Bulk Lock)
+     */
+    public function bulkLock(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+
+        // Update Massal dengan mencatat waktu locked_at
+        TestUser::whereIn('id', $request->ids)->update([
+            'is_locked' => true,
+            'locked_at' => now(), // 🔥 Catat waktu
+            'lock_reason' => $request->lock_reason ?? 'Dikunci massal'
+        ]);
+
+        return back()->with('success', 'Peserta terpilih berhasil dikunci.');
+    }
+
+    public function bulkUnlock(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+
+        $testUsers = TestUser::whereIn('id', $request->ids)->get();
+
+        foreach ($testUsers as $testUser) {
+            $dataToUpdate = [
+                'is_locked' => false,
+                'lock_reason' => null,
+                'locked_at' => null
+            ];
+
+            // Hitung kompensasi waktu per user
+            if ($testUser->locked_at) {
+                $lockedTime = Carbon::parse($testUser->locked_at);
+                $diffInMinutes = $lockedTime->diffInMinutes(now());
+
+                // Tambah extra time
+                $dataToUpdate['extra_time'] = $testUser->extra_time + $diffInMinutes;
+            }
+
+            $testUser->update($dataToUpdate);
+        }
+
+        return back()->with('success', 'Peserta terpilih dibuka & waktu dikompensasi.');
+    }
+
+    /**
+     * Validasi Massal (Bulk Validate) - VERSI JUJUR
+     */
+    public function bulkValidate(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+
+        // Simpan jumlah baris yang BENAR-BENAR terupdate
+        $affected = \App\Models\Result::whereIn('test_user_id', $request->ids)
+            ->update([
+                'status' => 'validated',
+                'validated_by' => auth()->id(),
+                'validated_at' => now()
+            ]);
+
+        // Jika tidak ada yang terupdate (0), beri pesan peringatan
+        if ($affected === 0) {
+            return back()->with('error', 'Tidak ada data yang divalidasi. Pastikan peserta statusnya sudah SELESAI.');
+        }
+
+        // Jika ada yang terupdate, tampilkan jumlah aslinya
+        return back()->with('success', "$affected Hasil peserta berhasil divalidasi.");
+    }
+
+    /**
+     * Hapus Massal (Bulk Delete)
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+
+        // Hapus data peserta ujian (Otomatis hapus jawaban & nilai karena cascading di DB)
+        TestUser::whereIn('id', $request->ids)->delete();
+
+        return back()->with('success', count($request->ids) . ' Peserta berhasil dihapus beserta seluruh jawabannya.');
     }
 }
