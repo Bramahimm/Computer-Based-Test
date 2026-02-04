@@ -28,6 +28,8 @@ class UpdateTestRequest extends FormRequest
             'topics.*.id' => 'required|exists:topics,id',
             'topics.*.total_questions' => 'required|integer|min:1',
             'topics.*.question_type' => 'nullable|string',
+
+            'results_to_users' => 'nullable|boolean',
         ];
     }
     public function messages(): array

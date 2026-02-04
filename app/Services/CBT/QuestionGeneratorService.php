@@ -15,7 +15,8 @@ class QuestionGeneratorService
     {
         $cacheKey = self::cacheKey($test->id, $userId);
 
-        // Jika sudah pernah generate → ambil dari cache (refresh-safe)
+        // 🔥 PERBAIKAN 1: UNCOMMENT CACHE
+        // Ini wajib aktif agar saat user refresh, sistem tidak mengacak ulang soal.
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
@@ -80,11 +81,12 @@ class QuestionGeneratorService
             ->whereIn('id', $session['question_ids'])
             ->get();
 
+        // Urutkan soal kembali sesuai urutan di session cache
         $questions = $questions->sortBy(function ($model) use ($session) {
             return array_search($model->id, $session['question_ids']);
         })->values();
 
-        return $questions->map(function ($question) use ($test) {
+        return $questions->map(function ($question) use ($test, $userId) {
 
             $topic = $test->topics->where('id', $question->topic_id)->first();
             if (!$topic) return $question;
@@ -94,19 +96,21 @@ class QuestionGeneratorService
             // Atur jawaban PG
             if ($question->type === 'multiple_choice') {
 
-                // 🔥 FIX: AMBIL SEMUA JAWABAN DARI DATABASE
-                // Hapus logika pemisahan $correct & $wrong yang membatasi jumlah.
-                // Kita ambil langsung semua relasi answers yang sudah di-load.
-
                 $answers = $question->answers;
 
                 // Tetap lakukan pengacakan jika fitur random aktif
                 if ($pivot->random_answers) {
-                    $answers = $answers->shuffle();
+                    // 🔥 PERBAIKAN 2: DETERMINISTIC SHUFFLE
+                    // Jangan pakai shuffle() biasa karena akan berubah tiap refresh.
+                    // Gunakan sorting berdasarkan Hash ID Jawaban + ID User.
+                    // Hasilnya: Acak berbeda tiap user, tapi KONSISTEN (tetap) untuk user tersebut.
+                    $answers = $answers->sortBy(function ($ans) use ($userId) {
+                        return md5($ans->id . '_' . $userId);
+                    })->values();
                 }
 
-                // Set ulang relasi dengan urutan baru (atau urutan asli DB jika tidak diacak)
-                $question->setRelation('answers', $answers->values());
+                // Set ulang relasi dengan urutan baru
+                $question->setRelation('answers', $answers);
             }
 
             return $question;

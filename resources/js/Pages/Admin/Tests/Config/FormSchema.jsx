@@ -10,6 +10,7 @@ export const initialForm = {
   groups: [],
   topics: [],
   module_id: "",
+  results_to_users: 0,
 };
 
 export const transformForEdit = (test) => ({
@@ -30,4 +31,5 @@ export const transformForEdit = (test) => ({
       max_answers: t.pivot.max_answers || 4,
       answer_mode: t.pivot.answer_mode || 0,
     })) || [],
+    results_to_users: test.results_to_users ?? 0,
 });

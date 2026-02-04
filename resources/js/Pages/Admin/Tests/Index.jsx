@@ -1,8 +1,9 @@
 import React, { useMemo } from "react";
 import { Head, usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import Management from "./Components/TestManagement";
-import Results from "./Results"
+import Management from "./Components/TestManagement"; // Pastikan path ini benar
+import Results from "./Results";
+import Analitics from "./Analitics";
 
 export default function Index(props) {
   const { url } = usePage();
@@ -16,10 +17,23 @@ export default function Index(props) {
   const renderContent = () => {
     switch (section) {
       case "tests":
-        return <Management {...props} />;
+        // Mode Management Biasa
+        return <Management {...props} isStatisticMode={false} />;
+      
       case "results":
         return <Results {...props} />;
+      
+      // 🔥 INI BAGIAN PENTING YANG KURANG 🔥
+      case "statistic":
+        // Panggil Management lagi, TAPI aktifkan mode statistik
+        return <Management {...props} isStatisticMode={true} />;
+
+      case "analitics":
+        // 🔥 Analytics Mode - Tampilkan Analisis Data Ujian
+        return <Analitics {...props} />;
+
       default:
+        // Tampilan Construction (Default jika case tidak ditemukan)
         return (
           <div className="bg-white p-20 rounded-xl border border-dashed text-center text-gray-400">
             <span className="material-icons text-5xl mb-4">construction</span>

@@ -12,12 +12,21 @@ class TestUser extends Model
     protected $fillable = [
         'test_id',
         'user_id',
+        'status',
         'started_at',
         'finished_at',
-        'status',
         'current_index',
         'last_question_id',
         'last_activity_at',
+
+        // 🔥 WAJIB ADA AGAR WAKTU BISA BERTAMBAH SAAT UNLOCK
+        'extra_time',
+
+        // Field Locking
+        'is_locked',
+        'lock_reason',
+        'locked_by',
+        'locked_at',
     ];
 
     /**
@@ -26,8 +35,11 @@ class TestUser extends Model
     protected $casts = [
         'started_at'       => 'datetime',
         'finished_at'      => 'datetime',
-        'last_activity_at' => 'datetime', 
+        'last_activity_at' => 'datetime',
+        'locked_at'        => 'datetime',
         'current_index'    => 'integer',
+        'is_locked'        => 'boolean',
+        'extra_time'       => 'integer', 
     ];
 
     /* ================= RELATIONS ================= */
@@ -60,5 +72,11 @@ class TestUser extends Model
     public function lastQuestion()
     {
         return $this->belongsTo(Question::class, 'last_question_id');
+    }
+
+    // TestUser → Admin yang mengunci
+    public function locker()
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 }

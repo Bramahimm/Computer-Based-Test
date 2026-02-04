@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Trash2 } from 'lucide-react'; // Pastikan install/import icon ini
+import { Trash2 } from 'lucide-react'; 
 
 export default function AnswerOptions({ question, selectedAnswer, testUserId, onAnswer }) {
     const [isSaving, setIsSaving] = useState(false);
@@ -19,25 +19,23 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
             });
         } catch (error) {
             console.error("Gagal menyimpan jawaban", error);
-            alert("Gagal menyimpan jawaban. Cek koneksi Anda.");
+            // Alert opsional, bisa dihapus jika mengganggu
         } finally {
             setIsSaving(false);
         }
     };
 
-    // 🔥 BARU: Logic Batal Jawab
+    // Logic Batal Jawab (TETAP SAMA)
     const handleClear = async () => {
         if (isSaving || !selectedAnswer?.answerId) return;
 
-        // 1. Optimistic Update (Set null)
         onAnswer(null);
 
-        // 2. Background Save (Kirim null ke server)
         setIsSaving(true);
         try {
             await axios.post(route('peserta.tests.answer', testUserId), {
                 question_id: question.id,
-                answer_id: null, // Null = Hapus jawaban
+                answer_id: null,
                 answer_text: null
             });
         } catch (error) {
@@ -49,7 +47,7 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
 
     return (
         <div className="space-y-3">
-            {/* Loop Jawaban (TETAP SAMA) */}
+            {/* Loop Jawaban */}
             {question.answers.map((option) => {
                 const isSelected = selectedAnswer?.answerId === option.id;
                 
@@ -74,17 +72,20 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
                             {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                         </div>
 
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0"> {/* min-w-0 agar text wrap */}
                             {option.answer_image && (
                                 <img 
                                     src={`/storage/${option.answer_image}`} 
-                                    className="mb-2 max-h-40 rounded-lg border border-gray-200" 
+                                    className="mb-2 max-h-40 rounded-lg border border-gray-200 object-contain bg-white" 
                                     alt="Opsi Gambar"
                                 />
                             )}
-                            <span className={`text-base leading-relaxed ${isSelected ? 'text-emerald-900 font-medium' : 'text-gray-700'}`}>
-                                {option.answer_text}
-                            </span>
+                            
+                            {/* 🔥 GANTI DISINI: Support HTML & Rumus */}
+                            <div 
+                                className={`text-base leading-relaxed prose prose-sm max-w-none ${isSelected ? 'text-emerald-900 font-medium' : 'text-gray-700'}`}
+                                dangerouslySetInnerHTML={{ __html: option.answer_text }}
+                            />
                         </div>
 
                         {isSelected && (
@@ -94,10 +95,8 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
                 );
             })}
 
-            {/* 🔥 BARU: Footer Action (Tombol Batal & Loading) */}
+            {/* Footer Action (Tombol Batal & Loading) - TETAP SAMA */}
             <div className="flex justify-between items-center pt-2 mt-4 border-t border-gray-50">
-                
-                {/* Tombol Batal (Hanya muncul jika sudah menjawab) */}
                 <div>
                     {selectedAnswer?.answerId && (
                         <button 
@@ -111,7 +110,6 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
                     )}
                 </div>
 
-                {/* Status Simpan */}
                 <div className="h-5 flex items-center">
                     {isSaving && (
                         <span className="text-xs text-emerald-600 animate-pulse font-medium flex items-center gap-1">

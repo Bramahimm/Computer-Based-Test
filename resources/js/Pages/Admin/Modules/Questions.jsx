@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { router } from "@inertiajs/react";
 import Button from "@/Components/UI/Button"; 
 import Pagination from "@/Components/UI/Pagination"; 
-// Import komponen modal create/edit
 import CreateQuestion from "./CreateQuestion";
 
 import { 
@@ -11,12 +10,16 @@ import {
     FunnelIcon, CheckCircleIcon, ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 
+// 🔥 PENTING: IMPORT CSS AGAR RUMUS & SIMBOL TAMPIL BENAR
+import "katex/dist/katex.min.css";
+import "react-quill/dist/quill.snow.css";
+
 export default function Questions({ modules = [], topics = [], questions = null, filters = {} }) {
     const [isLoading, setIsLoading] = useState(false);
     
     // State untuk Modal
     const [showModal, setShowModal] = useState(false);
-    const [mode, setMode] = useState("create"); // 'create' or 'edit'
+    const [mode, setMode] = useState("create"); 
     const [editingQuestion, setEditingQuestion] = useState(null);
 
     // --- LOGIC FILTERING ---
@@ -194,13 +197,16 @@ export default function Questions({ modules = [], topics = [], questions = null,
 
                                 <div className="pl-[44px]">
                                     
-                                    {/* 1. TEKS SOAL */}
+                                    {/* 1. TEKS SOAL (Render HTML + Rumus) */}
                                     {q.question_text && (
-                                        <div className="text-gray-800 font-medium leading-relaxed mb-4 prose prose-sm max-w-none text-justify" dangerouslySetInnerHTML={{ __html: q.question_text }} />
+                                        <div 
+                                            className="text-gray-800 font-medium leading-relaxed mb-4 prose prose-sm max-w-none text-justify ql-editor" 
+                                            style={{ padding: 0 }} // Reset padding bawaan Quill
+                                            dangerouslySetInnerHTML={{ __html: q.question_text }} 
+                                        />
                                     )}
 
-                                    {/* 2. GAMBAR SOAL (DIPERBAIKI) */}
-                                    {/* Menggunakan path langsung /storage/ agar tidak tergantung controller */}
+                                    {/* 2. GAMBAR SOAL */}
                                     {q.question_image && (
                                         <div className="mb-5">
                                             <img 
@@ -223,7 +229,7 @@ export default function Questions({ modules = [], topics = [], questions = null,
                                                     </div>
                                                     
                                                     {/* Isi Jawaban */}
-                                                    <div className="flex flex-col gap-1 w-full">
+                                                    <div className="flex flex-col gap-1 w-full min-w-0">
                                                         {/* Gambar Jawaban */}
                                                         {a.answer_image && (
                                                             <img 
@@ -232,9 +238,12 @@ export default function Questions({ modules = [], topics = [], questions = null,
                                                                 className="max-h-24 w-auto rounded border border-gray-200 mb-1 object-contain self-start"
                                                             />
                                                         )}
-                                                        {/* Teks Jawaban */}
+                                                        {/* 🔥 TEKS JAWABAN (Render HTML + Rumus) */}
                                                         {a.answer_text && (
-                                                            <span className={`text-sm ${a.is_correct ? 'font-semibold' : ''}`}>{a.answer_text}</span>
+                                                            <div 
+                                                                className={`text-sm prose prose-sm max-w-none ${a.is_correct ? 'font-semibold' : ''}`}
+                                                                dangerouslySetInnerHTML={{ __html: a.answer_text }}
+                                                            />
                                                         )}
                                                     </div>
                                                 </div>

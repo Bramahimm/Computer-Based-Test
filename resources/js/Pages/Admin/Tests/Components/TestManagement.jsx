@@ -1,44 +1,43 @@
 import React, { useState, useMemo } from "react";
-import { useForm, router, usePage } from "@inertiajs/react"; // Tambah usePage & router
+import { useForm, router, usePage } from "@inertiajs/react";
 import Modal from "@/Components/UI/Modal";
 import Button from "@/Components/UI/Button";
 import TestTable from "./TestTable";
 import TestForm from "./TestForm";
-import DataFilter from "@/Components/Shared/DataFilter"; // Import DataFilter
+import DataFilter from "@/Components/Shared/DataFilter";
 import { initialForm, transformForEdit } from "../Config/FormSchema";
 
-export default function Management({
-  tests, // Sekarang ini adalah object Pagination (data, links, meta)
+export default function TestManagement({
+  tests,
   groups,
   topics,
   modules,
+  isStatisticMode = false,
 }) {
-  // 1. Ambil state filters dari Backend (agar sinkron saat refresh)
   const { filters } = usePage().props;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  // State lokal untuk filter UI
   const [params, setParams] = useState({
     search: filters?.search || "",
     module_id: filters?.module_id || "",
     group_id: filters?.group_id || "",
   });
 
-  // 2. Logic Trigger Filter ke Backend
   const refreshData = (newParams) => {
     setParams(newParams);
-    router.get(route("admin.tests.index"), newParams, {
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    const section = currentUrlParams.get('section');
+
+    router.get(route("admin.tests.index"), { ...newParams, section }, {
       preserveState: true,
       preserveScroll: true,
-      replace: true, // Agar history browser tidak penuh sampah ketikan
+      replace: true,
     });
   };
 
-  // 3. Konfigurasi Filter untuk DataFilter.jsx
-  // Menggunakan useMemo agar tidak re-render berlebihan
   const filterConfig = useMemo(
     () => [
       {
@@ -57,25 +56,21 @@ export default function Management({
     [params, modules, groups],
   );
 
-  // Handler Search (Debounce manual sederhana)
   const onSearch = (val) => {
     setParams((prev) => ({ ...prev, search: val }));
-
     clearTimeout(window.searchTimeout);
     window.searchTimeout = setTimeout(() => {
-      router.get(
-        route("admin.tests.index"),
-        { ...params, search: val },
-        {
-          preserveState: true,
-          preserveScroll: true,
-          replace: true,
-        },
-      );
-    }, 400); // Delay 400ms
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        const section = currentUrlParams.get('section');
+
+        router.get(
+            route("admin.tests.index"),
+            { ...params, search: val, section },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    }, 400);
   };
 
-  // --- Logic Modal & Form (Kode Lama Anda) ---
   const {
     data,
     setData,
@@ -88,7 +83,7 @@ export default function Management({
     transform,
   } = useForm(initialForm);
 
-  // Transform Data sebelum Submit
+  // 🔥 PERBAIKAN DI SINI: Transform Data sebelum Submit
   transform((data) => ({
     ...data,
     start_time: data.start_time ? data.start_time.replace("T", " ") : null,
@@ -96,11 +91,23 @@ export default function Management({
     description: data.description || "",
     groups: Array.isArray(data.groups) ? data.groups : [],
     topics: Array.isArray(data.topics)
-      ? data.topics.map((id) => ({
-          id: id,
-          total_questions: 10, // Default value, idealnya dinamis
-          question_type: "mixed",
-        }))
+      ? data.topics.map((item) => {
+          // Cek apakah item berupa object (dari edit) atau hanya ID (dari select baru)
+          const topicId = typeof item === 'object' ? item.id : item;
+          
+          // Logika Penentuan Jumlah Soal:
+          // 1. Jika item object dan punya 'total_questions', pakai nilai itu.
+          // 2. Jika tidak, pakai 1000 (angka besar) agar mengambil SEMUA stok soal di DB.
+          const qty = (typeof item === 'object' && item.total_questions) 
+              ? item.total_questions 
+              : 1000; 
+
+          return {
+             id: topicId,
+             total_questions: qty, // ✅ Sekarang dinamis / ambil semua
+             question_type: (typeof item === 'object' && item.question_type) ? item.question_type : "mixed",
+          };
+        })
       : [],
   }));
 
@@ -138,20 +145,27 @@ export default function Management({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden text-left">
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Manajemen Ujian</h1>
+          <h1 className="text-xl font-bold text-gray-900">
+            {isStatisticMode ? "Statistik & Analisis Ujian" : "Manajemen Ujian"}
+          </h1>
           <p className="text-[11px] text-gray-500 font-semibold">
-            Kelola Daftar & Konfigurasi CBT
+            {isStatisticMode
+              ? "Pilih ujian untuk melihat laporan detail & analisis butir soal"
+              : "Kelola Daftar & Konfigurasi CBT"}
           </p>
         </div>
-        <Button
-          onClick={() => openModal()}
-          className="bg-gradient-to-r bg-green-600 text-white text-xs font-bold px-6">
-          Tambah Ujian
-        </Button>
+        
+        {!isStatisticMode && (
+          <Button
+            onClick={() => openModal()}
+            className="bg-gradient-to-r bg-green-600 text-white text-xs font-bold px-6"
+          >
+            Tambah Ujian
+          </Button>
+        )}
       </div>
 
       <div className="p-8">
-        {/* IMPLEMENTASI FILTER DINAMIS */}
         <DataFilter
           searchPlaceholder="Cari judul ujian..."
           searchValue={params.search}
@@ -162,24 +176,23 @@ export default function Management({
           }
         />
 
-        {/* Tabel Data (Support Pagination Object) */}
         <TestTable
-          tests={tests.data || []} // Handle data dari pagination
+          tests={tests.data || []}
+          isStatisticMode={isStatisticMode}
           onEdit={openModal}
           onDelete={(id) =>
             confirm("Hapus ujian ini beserta seluruh data nilainya?") &&
             router.delete(route("admin.tests.destroy", id))
           }
         />
-
-        {/* Tambahkan Pagination Controls disini nanti jika perlu */}
       </div>
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editMode ? "Edit Ujian" : "Tambah Ujian"}
-        size="lg">
+        size="lg"
+      >
         <form onSubmit={handleSubmit} className="p-1">
           {/* WRAPPING TOMBOL KE DALAM TESTFORM */}
           <TestForm

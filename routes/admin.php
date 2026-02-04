@@ -7,13 +7,16 @@ use App\Http\Controllers\Admin\{
     TopicController,
     QuestionController,
     TestController,
+    TestUserController,
     ResultController,
     MonitoringController,
     ForceSubmitController,
     ImportUserController,
     ImportQuestionController,
+    AnalyticsController,
     UserController,
-    GroupController
+    GroupController,
+    StatisticsController
 };
 
 Route::middleware([
@@ -52,22 +55,63 @@ Route::middleware([
 
     Route::resource('tests', TestController::class);
     Route::resource('groups', GroupController::class);
+    Route::resource('test-users', TestUserController::class)->only(['show']);
 
+    // Lock/Unlock Test Users
+    Route::post('/test-users/{testUser}/lock', [TestUserController::class, 'lock'])
+        ->name('test-users.lock');
+    Route::post('/test-users/{testUser}/unlock', [TestUserController::class, 'unlock'])
+        ->name('test-users.unlock');
+    Route::post('/test-users/{testUser}/add-time', [TestUserController::class, 'addTime'])
+        ->name('test-users.addTime');
 
+    // 1. Single Actions (Per User)
+    Route::post('/test-users/{testUser}/lock', [TestUserController::class, 'lock'])->name('test-users.lock');
+    Route::post('/test-users/{testUser}/unlock', [TestUserController::class, 'unlock'])->name('test-users.unlock');
+    Route::post('/test-users/{testUser}/add-time', [TestUserController::class, 'addTime'])->name('test-users.addTime');
 
-    // Result & Validation
-    Route::get('/results', [ResultController::class, 'index'])
-        ->name('results.index');
+    // 2. Bulk Actions (Massal - WAJIB ADA AGAR HEADER BERFUNGSI)
+    Route::post('test-users/bulk-lock', [TestUserController::class, 'bulkLock'])->name('test-users.bulk-lock');     // 👈 Tambahan
+    Route::post('test-users/bulk-unlock', [TestUserController::class, 'bulkUnlock'])->name('test-users.bulk-unlock'); // 👈 Tambahan
+    Route::post('test-users/bulk-add-time', [TestUserController::class, 'bulkAddTime'])->name('test-users.bulk-add-time'); // 👈 Tambahan
+    // Pastikan bagian array-nya tertulis [TestUserController::class, 'bulkValidate']
+    Route::post('test-users/bulk-validate', [TestUserController::class, 'bulkValidate'])
+        ->name('test-users.bulk-validate');
 
-    Route::post('/results/{testUser}/validate', [ResultController::class, 'validateResult'])
-        ->name('results.validate');
+    Route::post('test-users/bulk-delete', [TestUserController::class, 'bulkDelete'])
+        ->name('test-users.bulk-delete'); // 👈 Tambahan
 
-    // Monitoring Hari-H
-    Route::get('/monitoring/tests/{test}', [MonitoringController::class, 'index'])
-        ->name('monitoring.index');
+    // 3. Export Data
+    Route::get('export/test-users', [TestUserController::class, 'export'])
+        ->name('test-users.export');
 
     Route::post(
         '/monitoring/test-users/{testUser}/force-submit',
         [ForceSubmitController::class, 'submit']
     )->name('monitoring.forceSubmit');
+
+    // =========================================================
+    // 🔥 STATISTICS / STATISTIK (BARU) 🔥
+    // =========================================================
+
+    // Statistik per Ujian (Untuk Admin melihat performa soal/peserta dalam 1 ujian)
+    // URL: /admin/statistics/tests/{id_test}
+    Route::get('/statistics/tests/{test}', [StatisticsController::class, 'test'])
+        ->name('statistics.test');
+
+    // Statistik per Siswa (Untuk melihat riwayat nilai spesifik user)
+    // URL: /admin/statistics/students/{id_user}
+    Route::get('/statistics/students/{user}', [StatisticsController::class, 'student'])
+        ->name('statistics.student');
+
+    Route::post('/tests/grade-essay', [StatisticsController::class, 'gradeEssay'])
+        ->name('tests.grade-essay');
+
+        
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('monitoring.index');
+    Route::get('/analytics/{id}', [AnalyticsController::class, 'show'])->name('analytics.show');
+
+    // Route Aksi (Tambah Waktu / Stop)
+    Route::post('/analytics/{id}/force-submit', [AnalyticsController::class, 'forceSubmit'])
+        ->name('analytics.forceSubmit');
 });
