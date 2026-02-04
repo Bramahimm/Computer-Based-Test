@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\CBT\ScoringService;
 use App\Http\Controllers\Controller;
 use App\Models\TestUser;
 use Illuminate\Support\Carbon;
@@ -215,29 +216,62 @@ class TestUserController extends Controller
     }
 
     /**
-     * Validasi Massal (Bulk Validate) - VERSI JUJUR
+     * Validasi Massal (Bulk Validate) - VERSI Putra
      */
-    public function bulkValidate(Request $request)
-    {
-        $request->validate(['ids' => 'required|array']);
+    // public function bulkValidate(Request $request)
+    // {
+    //     $request->validate(['ids' => 'required|array']);
 
-        // Simpan jumlah baris yang BENAR-BENAR terupdate
-        $affected = \App\Models\Result::whereIn('test_user_id', $request->ids)
-            ->update([
+    //     // Simpan jumlah baris yang BENAR-BENAR terupdate
+    //     $affected = \App\Models\Result::whereIn('test_user_id', $request->ids)
+    //         ->update([
+    //             'status' => 'validated',
+    //             'validated_by' => auth()->id(),
+    //             'validated_at' => now()
+    //         ]);
+
+    //     // Jika tidak ada yang terupdate (0), beri pesan peringatan
+    //     if ($affected === 0) {
+    //         return back()->with('error', 'Tidak ada data yang divalidasi. Pastikan peserta statusnya sudah SELESAI.');
+    //     }
+
+    //     // Jika ada yang terupdate, tampilkan jumlah aslinya
+    //     return back()->with('success', "$affected Hasil peserta berhasil divalidasi.");
+    // }
+
+
+
+    // Versi bram
+    public function bulkValidate(Request $request)
+{
+    // Validasi: pastikan ada ID yang dikirim
+    $request->validate(['ids' => 'required|array']);
+
+    // Ambil semua sesi ujian yang dipilih
+    $testUsers = TestUser::whereIn('id', $request->ids)->get();
+    $count = 0;
+
+    foreach ($testUsers as $testUser) {
+        // Hitung ulang skor pake service
+        $score = ScoringService::calculate($testUser);
+
+        // Simpan/update hasil dengan status 'validated'
+        // Pakai updateOrCreate biar aman buat data lama yang belum punya result
+        Result::updateOrCreate(
+            ['test_user_id' => $testUser->id],
+            [
+                'total_score' => $score,
                 'status' => 'validated',
                 'validated_by' => auth()->id(),
                 'validated_at' => now()
-            ]);
+            ]
+        );
 
-        // Jika tidak ada yang terupdate (0), beri pesan peringatan
-        if ($affected === 0) {
-            return back()->with('error', 'Tidak ada data yang divalidasi. Pastikan peserta statusnya sudah SELESAI.');
-        }
-
-        // Jika ada yang terupdate, tampilkan jumlah aslinya
-        return back()->with('success', "$affected Hasil peserta berhasil divalidasi.");
+        $count++;
     }
 
+    return back()->with('success', "$count Hasil peserta berhasil dipublikasikan & dinilai ulang.");
+}
     /**
      * Hapus Massal (Bulk Delete)
      */

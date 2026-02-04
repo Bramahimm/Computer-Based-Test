@@ -1,79 +1,168 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
-import PesertaLayout from '@/Layouts/PesertaLayout';
-import { CheckCircle, Eye, Calendar, Award } from 'lucide-react';
-import EmptyState from '../Components/EmptyState';
+import React from "react";
+import { Head, Link, router } from "@inertiajs/react"; // Pastikan import router ada
+import PesertaLayout from "@/Layouts/PesertaLayout";
+import Table from "@/Components/UI/Table";
+import Pagination from "@/Components/UI/Pagination";
+import {
+  Award,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Eye,
+  FileText,
+} from "lucide-react";
 
-export default function Index({ results }) {
-    return (
-        <PesertaLayout>
-            <Head title="Riwayat Hasil Ujian" />
+export default function Index({ auth, results }) {
+  // Helper Format Tanggal
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Riwayat Hasil</h1>
-                    <p className="text-gray-500 mt-1">Lihat nilai dan detail jawaban ujian yang telah Anda selesaikan.</p>
-                </div>
+  return (
+    <PesertaLayout
+      user={auth.user}
+      header={
+        <h2 className="font-semibold text-xl text-gray-800 leading-tight">
+          Riwayat Hasil Ujian
+        </h2>
+      }>
+      <Head title="Riwayat Hasil" />
 
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                        <div className="col-span-5">Nama Ujian</div>
-                        <div className="col-span-3">Tanggal Selesai</div>
-                        <div className="col-span-2">Nilai Akhir</div>
-                        <div className="col-span-2 text-right">Aksi</div>
-                    </div>
-
-                    <div className="divide-y divide-gray-100">
-                        {results.length > 0 ? (
-                            results.map((item) => (
-                                <div key={item.id} className="p-4 sm:px-6 md:grid md:grid-cols-12 md:gap-4 md:items-center hover:bg-gray-50 transition-colors group">
-                                    <div className="col-span-5 mb-2 md:mb-0">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
-                                                <CheckCircle className="w-4 h-4" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-semibold text-gray-900">{item.test?.title}</h3>
-                                                <p className="text-xs text-gray-500 line-clamp-1">{item.test?.description || 'Tanpa deskripsi'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-3 text-sm text-gray-600 flex items-center gap-2 mb-2 md:mb-0">
-                                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                                        {new Date(item.finished_at).toLocaleDateString('id-ID', {
-                                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </div>
-
-                                    <div className="col-span-2 mb-3 md:mb-0">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${
-                                            item.result?.total_score >= 70 
-                                                ? 'bg-green-50 text-green-700 border-green-200' 
-                                                : 'bg-red-50 text-red-700 border-red-200'
-                                        }`}>
-                                            <Award className="w-3.5 h-3.5" />
-                                            {item.result?.total_score}
-                                        </span>
-                                    </div>
-
-                                    <div className="col-span-2 flex justify-end">
-                                        <Link 
-                                            href={route('peserta.results.show', item.id)}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-emerald-600 hover:border-emerald-200 transition-all shadow-sm"
-                                        >
-                                            <Eye className="w-3.5 h-3.5" />
-                                            Detail
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <EmptyState message="Belum ada riwayat ujian yang selesai." />
-                        )}
-                    </div>
-                </div>
+      <div className="py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Card */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 mb-8 text-white shadow-lg flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold mb-2">Arsip Prestasi</h1>
+              <p className="text-blue-100 max-w-xl">
+                Lihat kembali jejak ujian yang telah Anda selesaikan. Pembahasan
+                detail dan nilai akhir tersedia setelah divalidasi oleh Admin.
+              </p>
             </div>
-        </PesertaLayout>
-    );
+            <div className="hidden md:block bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+              <Award className="w-10 h-10 text-yellow-300" />
+            </div>
+          </div>
+
+          {/* Table Card */}
+          <div className="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-200">
+            <div className="p-6">
+              <Table
+                data={results.data}
+                emptyMessage="Anda belum memiliki riwayat ujian yang selesai."
+                columns={[
+                  {
+                    label: "Ujian",
+                    key: "test.title",
+                    // Gunakan 'row.test.title' langsung biar aman dari bug "titik"
+                    render: (_, row) => (
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 text-base">
+                          {row.test?.title || "-"}
+                        </span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(row.finished_at)}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    label: "Status Nilai",
+                    key: "status_nilai", // Ganti key jadi bebas aja, karena kita pakai 'row'
+                    className: "text-center",
+                    render: (_, row) => {
+                      // 🔥 FIX DISINI: Ambil langsung dari 'row.result'
+                      const resultData = row.result;
+
+                      // 1. Jika Data Result Belum Ada (Data Lama / Belum di-Publish)
+                      if (!resultData) {
+                        return (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500 border border-gray-200">
+                            <Clock className="w-3 h-3" />
+                            Belum Dinilai
+                          </span>
+                        );
+                      }
+
+                      // 2. Jika Status VALIDATED (Cek langsung ke objectnya)
+                      if (resultData.status === "validated") {
+                        return (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Divalidasi
+                          </span>
+                        );
+                      }
+
+                      // 3. Sisanya (Pending)
+                      return (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                          <Clock className="w-3 h-3" />
+                          Menunggu
+                        </span>
+                      );
+                    },
+                  },
+                  {
+                    label: "Nilai Akhir",
+                    key: "total_score",
+                    className: "text-center",
+                    render: (_, row) => {
+                      const resultData = row.result;
+
+                      // Hanya tampilkan jika Validated
+                      if (resultData && resultData.status === "validated") {
+                        const score = resultData.total_score; // Ambil nilai
+                        const isLulus = score >= (row.test?.kkm || 60);
+
+                        return (
+                          <div className="flex flex-col items-center">
+                            <span
+                              className={`text-lg font-black ${isLulus ? "text-green-600" : "text-red-600"}`}>
+                              {score}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <span className="text-gray-400 text-xs italic">--</span>
+                      );
+                    },
+                  },
+                  {
+                    label: "Aksi",
+                    key: "actions",
+                    className: "text-center",
+                    render: (_, row) => (
+                      <div className="flex justify-center">
+                        <Link
+                          href={route("peserta.results.show", row.id)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-bold text-xs border border-blue-200">
+                          <Eye className="w-4 h-4" />
+                          Detail
+                        </Link>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+
+              <div className="mt-6">
+                <Pagination links={results.links} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </PesertaLayout>
+  );
 }
