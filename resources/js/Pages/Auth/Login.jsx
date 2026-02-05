@@ -1,103 +1,169 @@
-
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import { UserIcon, LockClosedIcon } from '@heroicons/react/24/solid'
+import { motion } from 'framer-motion'
+import { 
+    User, 
+    LockKeyhole, 
+    LogIn, 
+    ShieldCheck, 
+    Activity 
+} from 'lucide-react'
 
 import Input from '@/Components/UI/Input'
 import Button from '@/Components/UI/Button'
 
 export default function Login() {
     const { data, setData, post, processing, errors } = useForm({
-    login: '',
-    password: '',
-    remember: false,
-})
-
+        login: '',
+        password: '',
+        remember: false,
+    })
 
     const submit = (e) => {
         e.preventDefault()
         post(route('login'))
     }
 
+    // Varians Animasi
+    const fadeInUp = {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.6, ease: "easeOut" }
+    }
+
+    const staggerContainer = {
+        animate: { transition: { staggerChildren: 0.1 } }
+    }
+
     return (
-        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-slate-100 to-slate-200 font-sans">
+        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-slate-50 to-slate-100 font-sans overflow-hidden">
             <Head title="Login CBT FK Unila" />
-            {/* ================= LEFT ================= */}
+            
+            {/* ================= LEFT (Visual & Branding) ================= */}
             <div className="relative hidden lg:flex items-center justify-center overflow-hidden">
-                <img
+                <motion.img
+                    initial={{ scale: 1.1, opacity: 0 }}
+                    animate={{ scale: 1.05, opacity: 1 }}
+                    transition={{ duration: 1.5 }}
                     src="/images/fk.jpg"
                     alt="Fakultas Kedokteran Unila"
-                    className="absolute inset-0 w-full h-full object-cover scale-105"
+                    className="absolute inset-0 w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/90 via-emerald-800/80 to-slate-900/90" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/90 via-emerald-900/80 to-slate-900/90" />
 
-                <div className="relative z-10 max-w-xl px-16 text-white">
-                    <h1 className="text-5xl font-semibold leading-tight">
-                        Computer<br />Based Test
-                    </h1>
-                    <div className="mt-5 h-1.5 w-24 bg-emerald-400 rounded-full" />
-                    <p className="mt-6 text-emerald-100">
-                        Platform ujian terkomputerisasi Fakultas Kedokteran
-                        Universitas Lampung
-                    </p>
-                </div>
+                <motion.div 
+                    variants={staggerContainer}
+                    initial="initial"
+                    animate="animate"
+                    className="relative z-10 max-w-xl px-16 text-white"
+                >
+                    <motion.div variants={fadeInUp} className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-emerald-400/20 rounded-lg backdrop-blur-md">
+                            <ShieldCheck className="w-8 h-8 text-emerald-400" />
+                        </div>
+                        <span className="tracking-widest uppercase text-sm font-bold text-emerald-300">Official Platform</span>
+                    </motion.div>
+                    
+                    <motion.h1 variants={fadeInUp} className="text-6xl font-extrabold leading-tight tracking-tighter">
+                        Computer<br />
+                        <span className="text-emerald-400 font-black italic">Based Test</span>
+                    </motion.h1>
+                    
+                    <motion.div variants={fadeInUp} className="mt-6 h-1.5 w-24 bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)]" />
+                    
+                    <motion.p variants={fadeInUp} className="mt-8 text-lg text-emerald-100/90 leading-relaxed font-light">
+                        Platform ujian terkomputerisasi mutakhir 
+                        <span className="block font-semibold text-white mt-1">Fakultas Kedokteran Universitas Lampung</span>
+                    </motion.p>
+                </motion.div>
             </div>
 
-            {/* ================= RIGHT ================= */}
-            <div className="flex items-center justify-center px-6">
-                <div className="w-full max-w-md rounded-3xl bg-white/80 backdrop-blur-xl border shadow-xl">
-                    <div className="px-10 pt-10 text-center">
-                        <img
-                            src="/images/logo.png"
-                            alt="Universitas Lampung"
-                            className="mx-auto w-20 mb-4"
-                        />
-                        <h2 className="text-2xl font-semibold text-slate-800">
+            {/* ================= RIGHT (Form Login) ================= */}
+            <div className="flex items-center justify-center px-6 py-12 relative">
+                {/* Dekorasi Background Subtil */}
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <Activity className="w-64 h-64 text-emerald-900" />
+                </div>
+
+                <motion.div 
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="w-full max-w-md rounded-[2.5rem] bg-white/70 backdrop-blur-2xl border border-white shadow-2xl shadow-slate-200/50 overflow-hidden"
+                >
+                    <div className="px-10 pt-12 pb-6 text-center">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
+                        >
+                            <img
+                                src="/images/logo.png"
+                                alt="Universitas Lampung"
+                                className="mx-auto w-24 mb-6 drop-shadow-md"
+                            />
+                        </motion.div>
+                        <h2 className="text-3xl font-black text-slate-800 tracking-tight">
                             Login CBT
                         </h2>
-                        <p className="text-sm text-slate-500">
-                            Fakultas Kedokteran Universitas Lampung
+                        <p className="text-slate-500 mt-2 font-medium">
+                            Silakan masuk ke akun Anda
                         </p>
                     </div>
 
-                    <form onSubmit={submit} className="px-10 py-8 space-y-6">
-                        <Input
-                            label="Email / NPM"
-                            value={data.login}
-                            onChange={e => setData('login', e.target.value)}
-                            error={errors.login}
-                            placeholder="Email atau NPM"
-                        />
-
-                        <Input
-                            label="Password"
-                            type="password"
-                            icon={LockClosedIcon}
-                            value={data.password}
-                            onChange={e => setData('password', e.target.value)}
-                            error={errors.password}
-                            placeholder="Masukkan password"
-                        />
-
-                        <label className="flex items-center gap-2 text-sm text-slate-600">
-                            <input
-                                type="checkbox"
-                                checked={data.remember}
-                                onChange={e => setData('remember', e.target.checked)}
-                                className="rounded border-slate-300 text-emerald-600"
+                    <form onSubmit={submit} className="px-10 pb-12 space-y-5">
+                        <div className="space-y-1">
+                            <Input
+                                label="Email / NPM"
+                                value={data.login}
+                                icon={User} // Pastikan komponen Input Anda mendukung prop icon Lucide
+                                onChange={e => setData('login', e.target.value)}
+                                error={errors.login}
+                                placeholder="Masukkan Email atau NPM"
+                                className="rounded-2xl border-slate-200 focus:ring-emerald-500 transition-all"
                             />
-                            Remember me
-                        </label>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Input
+                                label="Password"
+                                type="password"
+                                icon={LockKeyhole}
+                                value={data.password}
+                                onChange={e => setData('password', e.target.value)}
+                                error={errors.password}
+                                placeholder="••••••••"
+                                className="rounded-2xl border-slate-200 focus:ring-emerald-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between py-2">
+                            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={data.remember}
+                                    onChange={e => setData('remember', e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 transition-colors"
+                                />
+                                <span className="group-hover:text-slate-900 transition-colors">Tetap masuk</span>
+                            </label>
+                            <a href="#" className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">Lupa Password?</a>
+                        </div>
 
                         <Button
                             type="submit"
                             isLoading={processing}
-                            className="w-full py-3 text-white rounded-xl bg-emerald-600 hover:bg-emerald-700"
+                            className="w-full py-4 text-white font-bold rounded-2xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                         >
-                            Masuk
+                            <LogIn className="w-5 h-5" />
+                            Masuk Sekarang
                         </Button>
+
+                        <p className="text-center text-xs text-slate-400 font-medium pt-4">
+                            &copy; {new Date().getFullYear()} FK Unila IT Unit. All rights reserved.
+                        </p>
                     </form>
-                </div>
+                </motion.div>
             </div>
         </div>
     )

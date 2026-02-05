@@ -96,7 +96,7 @@
                 <th width="5%" class="text-center">No</th>
                 <th width="15%">NPM</th>
                 <th width="25%">Nama Peserta</th>
-                <th width="20%">Mata Ujian</th>
+                <th width="20%">Mata Kuliah</th>
                 <th width="12%">Selesai</th>
                 <th width="13%" class="text-center">Status</th>
                 <th width="10%" class="text-center">Nilai</th>

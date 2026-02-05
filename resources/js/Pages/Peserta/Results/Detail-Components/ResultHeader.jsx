@@ -47,13 +47,6 @@ export default function ResultHeader({ testUser }) {
 
         {/* Kanan: Nilai Besar */}
         <div className="flex items-center gap-6">
-          <div className="text-right hidden md:block">
-            <div
-              className={`text-sm font-bold uppercase tracking-wider mb-1 ${isPassed ? "text-green-600" : "text-red-600"}`}>
-              {isPassed ? "Kompeten / Lulus" : "Belum Kompeten"}
-            </div>
-            <div className="text-xs text-gray-400">KKM: {kkm}</div>
-          </div>
 
           <div
             className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full flex flex-col items-center justify-center border-4 ${isPassed ? "border-green-100 bg-green-50 text-green-700" : "border-red-100 bg-red-50 text-red-700"}`}>

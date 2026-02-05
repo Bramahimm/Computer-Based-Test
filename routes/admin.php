@@ -65,7 +65,6 @@ Route::middleware([
     Route::post('/test-users/{testUser}/add-time', [TestUserController::class, 'addTime'])
         ->name('test-users.addTime');
 
-
     // 1. Single Actions (Per User)
     Route::post('/test-users/{testUser}/lock', [TestUserController::class, 'lock'])->name('test-users.lock');
     Route::post('/test-users/{testUser}/unlock', [TestUserController::class, 'unlock'])->name('test-users.unlock');

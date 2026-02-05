@@ -9,6 +9,13 @@ import {
     Award, Clock, AlertCircle, FileText, HelpCircle, Hourglass, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 
+// IMPORT CSS WAJIB
+import 'katex/dist/katex.min.css';
+import 'react-quill/dist/quill.snow.css';
+
+// 🔥 PERBAIKAN IMPORT: Langsung dari file sebelah, bukan folder Components
+import ExportPdfStatistics from './ExportPdfStatistics';
+
 export default function Statistics({ test, summary }) {
     const { stats, distribution, top_students, questions = [] } = summary;
 
@@ -28,10 +35,8 @@ export default function Statistics({ test, summary }) {
             answer_id: answerId,
             is_correct: isCorrect
         }, {
-            preserveScroll: true, // Mencegah scroll melompat ke atas
-            onSuccess: () => {
-                // Optional: Bisa tambah toast notification di sini
-            }
+            preserveScroll: true, 
+            onSuccess: () => { }
         });
     };
 
@@ -72,19 +77,23 @@ export default function Statistics({ test, summary }) {
                             <span>{test.title}</span>
                         </div>
                     </div>
+
+                    {/* TOMBOL PDF */}
+                    <ExportPdfStatistics test={test} stats={stats} questions={questions} />
                 </div>
 
                 {/* Cards Summary */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard title="Total Peserta" value={stats.total_participants} icon={Users} color="text-blue-600 bg-blue-600" subtext="Mahasiswa yang submit" />
                     <StatCard title="Rata-Rata Nilai" value={stats.average_score} icon={TrendingUp} color="text-purple-600 bg-purple-600" />
-                    <StatCard title="Lulus KKM" value={stats.passed_count} icon={CheckCircle} color="text-emerald-600 bg-emerald-600" subtext="Nilai ≥ 75" />
+                    <StatCard title="Lulus KKM" value={stats.passed_count} icon={CheckCircle} color="text-emerald-600 bg-emerald-600" subtext="Nilai ≥ 76" />
                     <StatCard title="Di Bawah KKM" value={stats.failed_count} icon={XCircle} color="text-red-600 bg-red-600" />
                 </div>
 
                 {/* Charts & Top Students */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+                    {/* Chart */}
+                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col min-w-0">
                         <div className="mb-6">
                             <h3 className="font-bold text-lg text-gray-900">Distribusi Nilai Peserta</h3>
                             <p className="text-sm text-gray-500">Sebaran nilai berdasarkan rentang skor</p>
@@ -106,11 +115,12 @@ export default function Statistics({ test, summary }) {
                         </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[430px]">
+                    {/* Top Students */}
+                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-auto min-w-0">
                         <h3 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
                             <Award className="w-5 h-5 text-yellow-500" /> Peringkat Tertinggi
                         </h3>
-                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                        <div className="space-y-3">
                             {top_students.length > 0 ? (
                                 top_students.map((student, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-all">
@@ -131,7 +141,7 @@ export default function Statistics({ test, summary }) {
                                     </div>
                                 ))
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                                <div className="py-8 flex flex-col items-center justify-center text-gray-400">
                                     <Users className="w-10 h-10 mb-2 opacity-20" />
                                     <p className="text-sm">Belum ada data peserta.</p>
                                 </div>
@@ -204,13 +214,23 @@ export default function Statistics({ test, summary }) {
                                         <tr className="bg-white">
                                             <td className="border-r border-gray-100"></td>
                                             <td className="px-6 py-5 text-gray-800">
+                                                
+                                                {/* FOTO SOAL */}
+                                                {q.question_image && (
+                                                    <div className="mb-4">
+                                                        <img src={`/storage/${q.question_image}`} alt="Visual Soal" className="max-h-64 rounded-lg border border-gray-200 object-contain" />
+                                                    </div>
+                                                )}
+
+                                                {/* HTML SOAL (Tampilan Web) */}
                                                 <div 
                                                     dangerouslySetInnerHTML={{ __html: q.question_text }} 
-                                                    className="prose prose-sm max-w-none mb-4 text-gray-800 break-words whitespace-normal [&_img]:max-w-full [&_img]:h-auto"
+                                                    className="prose prose-sm max-w-none mb-4 text-gray-800 break-words whitespace-normal [&_img]:max-w-full [&_img]:h-auto ql-editor"
+                                                    style={{ padding: 0, height: 'auto', overflow: 'visible' }}
                                                 />
 
                                                 <div className="space-y-2 mt-4">
-                                                    {/* LOGIKA PERCABANGAN: PILIHAN GANDA VS ESSAY */}
+                                                    {/* PILIHAN GANDA VS ESSAY */}
                                                     {q.answers && q.answers.length > 0 ? (
                                                         q.answers.map((ans, idx) => (
                                                             <div key={idx} className="flex items-start gap-4 group">
@@ -225,19 +245,32 @@ export default function Statistics({ test, summary }) {
                                                                         style={{ width: `${ans.selection_pct}%` }}
                                                                     ></div>
                                                                     <div className="relative z-10 flex flex-wrap justify-between items-center w-full text-xs gap-2">
-                                                                        <span className={`font-medium pr-2 break-words whitespace-normal leading-tight flex-1 ${ans.is_correct ? 'text-emerald-800' : 'text-gray-600'}`}>
-                                                                            {ans.answer_text} 
-                                                                            {ans.is_correct && <span className="ml-2 inline-block text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded uppercase tracking-wider align-middle">Kunci</span>}
-                                                                        </span>
-                                                                        <span className="font-bold text-gray-700 font-mono shrink-0">
-                                                                            {ans.selection_count} Mahasiswa ({ans.selection_pct}%)
+                                                                        
+                                                                        <div className="flex-1 min-w-0 pr-2">
+                                                                            {/* FOTO JAWABAN */}
+                                                                            {ans.answer_image && (
+                                                                                <img src={`/storage/${ans.answer_image}`} alt="Visual Jawaban" className="max-h-20 rounded border border-gray-200 mb-2 block" />
+                                                                            )}
+                                                                            {/* HTML JAWABAN */}
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div 
+                                                                                    dangerouslySetInnerHTML={{ __html: ans.answer_text }} 
+                                                                                    className={`font-medium break-words whitespace-normal leading-tight ql-editor ${ans.is_correct ? 'text-emerald-800' : 'text-gray-600'}`}
+                                                                                    style={{ padding: 0, height: 'auto', overflow: 'visible', minHeight: 0 }}
+                                                                                />
+                                                                                {ans.is_correct && <span className="inline-block text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded uppercase tracking-wider align-middle shrink-0">Kunci</span>}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        <span className="font-bold text-gray-700 font-mono shrink-0 self-start mt-1">
+                                                                            {ans.selection_count} Mhs ({ans.selection_pct}%)
                                                                         </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         ))
                                                     ) : (
-                                                        // --- ESSAY / TEXT DENGAN RAPID GRADING ---
+                                                        // ESSAY
                                                         <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
                                                             <div className="px-4 py-3 border-b border-gray-200 bg-gray-100/50 flex justify-between items-center">
                                                                 <h4 className="font-bold text-gray-700 text-xs uppercase tracking-wide flex items-center gap-2">
@@ -251,7 +284,7 @@ export default function Statistics({ test, summary }) {
                                                                 )}
                                                             </div>
                                                             
-                                                            <div className="max-h-[400px] overflow-y-auto p-4 custom-scrollbar space-y-3">
+                                                            <div className="p-4 space-y-3">
                                                                 {q.student_responses && q.student_responses.length > 0 ? (
                                                                     q.student_responses.map((resp, i) => (
                                                                         <div key={i} className={`p-4 rounded-xl border transition-all ${
@@ -271,11 +304,13 @@ export default function Statistics({ test, summary }) {
                                                                                 </div>
                                                                             </div>
 
-                                                                            <p className="text-gray-800 text-sm mb-4 leading-relaxed whitespace-pre-wrap font-serif border-l-2 border-gray-200 pl-3">
-                                                                                {resp.text}
-                                                                            </p>
+                                                                            {/* HTML JAWABAN SISWA */}
+                                                                            <div 
+                                                                                dangerouslySetInnerHTML={{ __html: resp.text }}
+                                                                                className="text-gray-800 text-sm mb-4 leading-relaxed whitespace-pre-wrap border-l-2 border-gray-200 pl-3 ql-editor"
+                                                                                style={{ padding: 0, height: 'auto', overflow: 'visible', minHeight: 0 }}
+                                                                            />
                                                                             
-                                                                            {/* TOMBOL RAPID GRADING */}
                                                                             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100/50">
                                                                                 <button 
                                                                                     onClick={() => handleGrade(resp.id, 0)}

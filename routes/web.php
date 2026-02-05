@@ -27,11 +27,13 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    if (!auth()->check()) {
-        return Inertia::location(route('login'));
+    // 1. Jika user sudah login, arahkan ke dashboard masing-masing
+    if (auth()->check()) {
+        return auth()->user()->role === 'admin'
+            ? Inertia::location(route('admin.dashboard'))
+            : Inertia::location(route('peserta.dashboard'));
     }
 
-    return auth()->user()->role === 'admin'
-        ? Inertia::location(route('admin.dashboard'))
-        : Inertia::location(route('peserta.dashboard'));
+    // 2. Jika user BELUM login, tampilkan halaman Welcome.jsx
+    return Inertia::render('Welcome');
 });

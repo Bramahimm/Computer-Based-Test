@@ -45,12 +45,12 @@ export const SideBarItems = [
         route: "admin.users.index",
         params: { section: "import" },
       },
-      {
-        name: "Hasil Individu",
-        id: "Individual",
-        route: "admin.users.index",
-        params: { section: "individual" },
-      },
+      // {
+      //   name: "Hasil Individu",
+      //   id: "Individual",
+      //   route: "admin.users.index",
+      //   params: { section: "individual" },
+      // },
     ],
   },
 
@@ -117,6 +117,6 @@ export const SideBarItems = [
     ],
   },
   { name: "Backup", icon: Database, route: "#" },
-  { name: "Public", icon: Globe, route: "#" },
+  // { name: "Public", icon: Globe, route: "#" },
   { name: "Help", icon: HelpCircle, route: "#" },
 ];

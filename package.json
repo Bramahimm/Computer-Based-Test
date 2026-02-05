@@ -22,8 +22,12 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
+        "framer-motion": "^12.31.0",
+        "jspdf": "^4.1.0",
+        "jspdf-autotable": "^5.0.7",
         "katex": "^0.16.28",
         "lucide-react": "^0.562.0",
+        "react-latex-next": "^3.0.0",
         "react-quill": "^2.0.0",
         "recharts": "^3.7.0",
         "sweetalert2": "^11.26.17"

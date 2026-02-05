@@ -25,7 +25,7 @@ class StudentStatisticsService
             'average_score' => $totalTests > 0 ? round($scores->avg(), 1) : 0,
             'highest_score' => $totalTests > 0 ? $scores->max() : 0,
             'lowest_score' => $totalTests > 0 ? $scores->min() : 0,
-            'passed_tests' => $history->where('result.total_score', '>=', 75)->count(),
+            'passed_tests' => $history->where('result.total_score', '>=', 76)->count(),
         ];
 
         // Data untuk Grafik (5 Ujian Terakhir)
@@ -44,7 +44,7 @@ class StudentStatisticsService
                 'test_title' => $item->test->title,
                 'finished_at' => $item->finished_at->format('d F Y H:i'),
                 'score' => $item->result->total_score ?? 0,
-                'status' => $item->result->total_score >= 75 ? 'Lulus' : 'Tidak Lulus',
+                'status' => $item->result->total_score >= 76 ? 'Lulus' : 'Tidak Lulus',
             ];
         });
 

@@ -71,16 +71,20 @@ class DashboardController extends Controller
             ->where('status', 'submitted')
             ->count();
 
-        // Rata-rata Nilai
+
+        // Rata-rata Nilai (Hanya yang sudah divalidasi oleh admin)
         $averageScore = Result::whereHas('testUser', function ($q) use ($user) {
             $q->where('user_id', $user->id);
-        })->avg('total_score');
+        })
+            ->where('status', 'validated') // 🔥 Tambahkan filter ini
+            ->avg('total_score');
 
         $summary = [
             'total_tests' => $totalTests,
             'completed_tests' => $completedTests,
             'average_score' => $averageScore ? round($averageScore, 1) : 0,
         ];
+
 
         // 3. 📋 Ambil Daftar Ujian untuk Tampilan List
         $recentTests = Test::whereHas('groups', function ($q) use ($user) {

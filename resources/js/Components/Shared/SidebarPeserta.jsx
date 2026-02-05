@@ -66,7 +66,7 @@ export default function SidebarPeserta({ isOpen, setIsOpen, theme }) {
             <div className="absolute bottom-0 left-0 w-full p-6">
                 <div className="bg-gradient-to-br from-emerald-800 to-emerald-900 rounded-2xl p-4 border border-white/10">
                     <p className="text-xs text-emerald-200 mb-2">Butuh bantuan?</p>
-                    <p className="text-xs text-white font-medium">Hubungi Admin Akademik</p>
+                    <p className="text-xs text-white font-medium">Hubungi Team IT CBT</p>
                 </div>
             </div>
         </aside>

@@ -51,6 +51,9 @@ class UserController extends Controller
         ]);
     }
 
+
+    // logic buat nampilin siapa aja yang lagi online
+
     private function handleOnline(Request $request)
     {
         // butuh semua data dulu untuk menentukan siapa yang online di seluruh database
@@ -129,6 +132,8 @@ class UserController extends Controller
             'filters' => $request->only(['search', 'group_id']),
         ]);
     }
+
+
     public function assignGroups(Request $request)
     {
         //Validasi Input
