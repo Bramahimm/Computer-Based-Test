@@ -87,7 +87,7 @@ class QuestionController extends Controller
         });
 
         return redirect()
-            ->route('admin.modules.index', ['section' => 'questions'])
+            ->back()
             ->with('success', 'Soal berhasil ditambahkan');
     }
 
@@ -163,7 +163,7 @@ class QuestionController extends Controller
         });
 
         return redirect()
-            ->route('admin.modules.index', ['section' => 'questions'])
+            ->back()
             ->with('success', 'Soal berhasil diperbarui');
     }
 
