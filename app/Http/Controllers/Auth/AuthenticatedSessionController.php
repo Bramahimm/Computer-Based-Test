@@ -29,23 +29,17 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request)
     {
-        $fieldType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'npm';
+        $request->authenticate(); 
 
-        if (Auth::attempt([$fieldType => $request->login, 'password' => $request->password], $request->remember)) {
-            $request->session()->regenerate();
+        $request->session()->regenerate();
 
-            $user = Auth::user();
-            $user->update(['active_session_id' => session()->getId()]);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->update(['active_session_id' => session()->getId()]);
 
-            return $user->role === 'admin'
-                ? redirect()->intended(route('admin.dashboard'))
-                : redirect()->intended(route('peserta.dashboard'));
-        }
-
-
-        throw \Illuminate\Validation\ValidationException::withMessages([
-            'login' => 'NIM/Email atau Password salah. Silakan periksa kembali.',
-        ]);
+        return $user->role === 'admin'
+            ? redirect()->intended(route('admin.dashboard'))
+            : redirect()->intended(route('peserta.dashboard'));
     }
 
     public function destroy(Request $request)

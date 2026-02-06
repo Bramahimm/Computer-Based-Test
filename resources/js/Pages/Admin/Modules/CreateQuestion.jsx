@@ -38,13 +38,12 @@ const modulesAnswer = {
 };
 
 const modulesQuestion = {
-  toolbar: [
-    ['bold', 'italic', 'underline'],
-    [{ 'script': 'sub'}, { 'script': 'super' }],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['formula'],
-    ['clean']
-  ],
+toolbar: [
+        ['bold', 'italic', { 'script': 'sub' }, { 'script': 'super' }], 
+        
+        ['formula'],
+        ['clean']
+    ],
 };
 
 export default function CreateQuestion({ show, onClose, mode, questionData, topicId }) {

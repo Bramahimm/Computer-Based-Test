@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
 
 class LoginRequest extends FormRequest
 {
@@ -23,6 +27,16 @@ class LoginRequest extends FormRequest
             'password' => ['required', 'string'],
         ];
     }
+    protected function failedValidation(Validator $validator): void 
+        {
+            throw new HttpResponseException(
+                Inertia::render('Auth/Login', [
+                    'canResetPassword' => Route::has('password.request'),
+                    'status' => session('status'),
+                    'errors' => $validator->errors()->toArray()
+                ]) -> toResponse($this)
+            );
+        }
 
     public function authenticate(): void
     {
@@ -30,7 +44,6 @@ class LoginRequest extends FormRequest
 
         $login = $this->input('login');
 
-        // 🔑 DETEKSI LOGIN TYPE
         $credentials = filter_var($login, FILTER_VALIDATE_EMAIL)
             ? ['email' => $login, 'password' => $this->password]
             : ['npm'   => $login, 'password' => $this->password];
@@ -38,8 +51,8 @@ class LoginRequest extends FormRequest
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'login' => trans('auth.failed'),
+            $this->throwInertiaError([
+                'login' => 'NPM/Email atau Password salah. Silakan periksa kembali.',
             ]);
         }
 
@@ -56,12 +69,23 @@ class LoginRequest extends FormRequest
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
-        throw ValidationException::withMessages([
+        $this->throwInertiaError([
             'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
         ]);
+    }
+
+    protected function throwInertiaError(array $errors): void
+    {
+        throw new HttpResponseException(
+            Inertia::render('Auth/Login', [
+                'canResetPassword' => Route::has('password.request'),
+                'status' => session('status'),
+                'errors' => $errors
+            ])->toResponse($this)
+        );
     }
 
     public function throttleKey(): string
