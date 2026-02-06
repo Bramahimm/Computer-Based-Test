@@ -1,7 +1,9 @@
 import React from "react";
 import Input from "@/Components/UI/Input";
+import { useState } from "react";
 
 export default function UserForm({ data, setData, errors, groups }) {
+  const [showPassword, setShowPassword] = useState(false);
   const handleGroupChange = (groupId) => {
     const isSelected = data.groups.includes(groupId);
 
@@ -15,7 +17,7 @@ export default function UserForm({ data, setData, errors, groups }) {
       // kita gunakan spread operator agar data lama tidak hilang
       setData("groups", [...data.groups, groupId]);
     }
-  };
+  }; 
 
   return (
     <div className="space-y-4 text-left">
@@ -45,6 +47,29 @@ export default function UserForm({ data, setData, errors, groups }) {
         error={errors.email}
         placeholder="email@contoh.com"
       />
+      <div className="relative">
+        <Input
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          value={data.password || ""}
+          onChange={(e) => setData("password", e.target.value)}
+          error={errors.password}
+          placeholder="isi hanya jika ingin mengubah password"
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+          tabIndex="-1"
+        >
+        </button>
+
+        <p className="mt-1 text-[10px] text-gray-400 font-medium italic flex items-center gap-1">
+          <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+          Biarkan kosong jika tidak ingin mengganti password user ini.
+        </p>
+      </div>
 
       <div className="mt-4">
         <label className="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">

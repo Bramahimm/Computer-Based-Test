@@ -296,14 +296,28 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'npm' => 'nullable|string|unique:users,npm,' . $user->id,
+        // 1. TAMPUNG hasil validasi ke variabel $validated
+        // (Kode lama Anda tidak menampungnya, jadi variabel $validated tidak ada isinya)
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'npm' => 'nullable|string|max:20|unique:users,npm,' . $user->id,
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|min:8',
             'groups' => 'required|array|min:1',
         ]);
 
-        $user->update($request->only('name', 'npm', 'is_active'));
-        $user->groups()->sync($request->groups);
+        // 2. Logika Password
+        if (empty($validated['password'])) {
+            // Hapus key 'password' dari array agar Laravel TIDAK mengupdate kolom password
+            unset($validated['password']); 
+        } else {
+            $validated['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($validated);
+        
+        // 4. Sync Group
+        $user->groups()->sync($validated['groups']);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil diperbarui');
