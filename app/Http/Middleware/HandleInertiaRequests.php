@@ -2,36 +2,47 @@
 
 namespace App\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): string|null
     {
         return parent::version($request);
     }
 
     /**
-     * Define the props that are shared by default.
-     *
-     * @return array<string, mixed>
+     * 🔥 KUNCI UNTUK SEB:
+     * Memaksa browser memvalidasi data di setiap request XHR/Inertia
+     */
+    public function handle(Request $request, Closure $next)
+    {
+        // Jalankan mesin utama Inertia dulu (agar data shared terisi)
+        $response = parent::handle($request, $next);
+
+        // Tambahkan header anti-cache agar SEB tidak "freeze" state lama
+        if (method_exists($response, 'header')) {
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
+        }
+
+        return $response;
+    }
+
+    /**
+     * Data yang dibagikan secara otomatis ke React
      */
     public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user(),
+                // Gunakan optional agar tidak crash saat logout
+                'user' => $request->user() ? $request->user() : null,
             ],
             // Menangkap pesan kilat (flash message)
             'flash' => [
@@ -39,7 +50,7 @@ class HandleInertiaRequests extends Middleware
                 'error'   => fn() => $request->session()->get('error'),
                 'warning' => fn() => $request->session()->get('warning'),
             ],
-            // 👇 TAMBAHKAN INI: Menangkap error validasi (Password salah, dll)
+            // Menangkap error validasi (Password salah, input kosong, dll)
             'errors' => function () use ($request) {
                 return $request->session()->get('errors')
                     ? $request->session()->get('errors')->getBag('default')->getMessages()
