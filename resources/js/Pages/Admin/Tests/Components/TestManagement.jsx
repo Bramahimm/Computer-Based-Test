@@ -29,13 +29,17 @@ export default function TestManagement({
   const refreshData = (newParams) => {
     setParams(newParams);
     const currentUrlParams = new URLSearchParams(window.location.search);
-    const section = currentUrlParams.get('section');
+    const section = currentUrlParams.get("section");
 
-    router.get(route("admin.tests.index"), { ...newParams, section }, {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
-    });
+    router.get(
+      route("admin.tests.index"),
+      { ...newParams, section },
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+      },
+    );
   };
 
   const filterConfig = useMemo(
@@ -60,14 +64,14 @@ export default function TestManagement({
     setParams((prev) => ({ ...prev, search: val }));
     clearTimeout(window.searchTimeout);
     window.searchTimeout = setTimeout(() => {
-        const currentUrlParams = new URLSearchParams(window.location.search);
-        const section = currentUrlParams.get('section');
+      const currentUrlParams = new URLSearchParams(window.location.search);
+      const section = currentUrlParams.get("section");
 
-        router.get(
-            route("admin.tests.index"),
-            { ...params, search: val, section },
-            { preserveState: true, preserveScroll: true, replace: true }
-        );
+      router.get(
+        route("admin.tests.index"),
+        { ...params, search: val, section },
+        { preserveState: true, preserveScroll: true, replace: true },
+      );
     }, 400);
   };
 
@@ -92,20 +96,22 @@ export default function TestManagement({
     groups: Array.isArray(data.groups) ? data.groups : [],
     topics: Array.isArray(data.topics)
       ? data.topics.map((item) => {
-          // Cek apakah item berupa object (dari edit) atau hanya ID (dari select baru)
-          const topicId = typeof item === 'object' ? item.id : item;
-          
-          // Logika Penentuan Jumlah Soal:
-          // 1. Jika item object dan punya 'total_questions', pakai nilai itu.
-          // 2. Jika tidak, pakai 1000 (angka besar) agar mengambil SEMUA stok soal di DB.
-          const qty = (typeof item === 'object' && item.total_questions) 
-              ? item.total_questions 
-              : 1000; 
+          // Ambil ID dengan aman
+          const topicId = typeof item === "object" ? item.id : item;
+
+          let qty =
+            typeof item === "object" && item.total_questions
+              ? parseInt(item.total_questions)
+              : 0;
+          if (qty <= 0) qty = 10;
 
           return {
-             id: topicId,
-             total_questions: qty, // ✅ Sekarang dinamis / ambil semua
-             question_type: (typeof item === 'object' && item.question_type) ? item.question_type : "mixed",
+            id: topicId,
+            total_questions: qty,
+            question_type:
+              typeof item === "object" && item.question_type
+                ? item.question_type
+                : "mixed",
           };
         })
       : [],
@@ -126,19 +132,27 @@ export default function TestManagement({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const options = {
+    clearErrors();
+
+    // create atau update
+    const action = editMode ? put : post;
+    const url = editMode 
+        ? route('admin.tests.update', data.id) 
+        : route('admin.tests.store');
+
+    action(url, {
+      preserveScroll: true, 
+      preserveState: true,  
+
       onSuccess: () => {
         setIsModalOpen(false);
         reset();
       },
-      preserveScroll: true,
-    };
-
-    if (editMode) {
-      put(route("admin.tests.update", selectedId), options);
-    } else {
-      post(route("admin.tests.store"), options);
-    }
+      
+      onError: (errors) => {
+        console.log("Gagal simpan:", errors);
+      },
+    });
   };
 
   return (
@@ -154,12 +168,11 @@ export default function TestManagement({
               : "Kelola Daftar & Konfigurasi CBT"}
           </p>
         </div>
-        
+
         {!isStatisticMode && (
           <Button
             onClick={() => openModal()}
-            className="bg-gradient-to-r bg-green-600 text-white text-xs font-bold px-6"
-          >
+            className="bg-gradient-to-r bg-green-600 text-white text-xs font-bold px-6">
             Tambah Ujian
           </Button>
         )}
@@ -191,8 +204,7 @@ export default function TestManagement({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editMode ? "Edit Ujian" : "Tambah Ujian"}
-        size="lg"
-      >
+        size="lg">
         <form onSubmit={handleSubmit} className="p-1">
           {/* WRAPPING TOMBOL KE DALAM TESTFORM */}
           <TestForm

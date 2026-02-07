@@ -7,6 +7,7 @@ import TopicSelector from "./TopicSelector";
 import ScoringTab from "./Advanced/ScoringTab";
 import BehaviorTab from "./Advanced/BehaviorTab";
 import ModuleSelector from "./ModuleSelector";
+import { useMemo } from "react";
 
 // TAMBAHKAN prop 'children' disini
 export default function TestForm({
@@ -20,6 +21,32 @@ export default function TestForm({
 }) {
   const [tab, setTab] = useState(0);
   const menus = ["Konfigurasi Utama", "Lanjutan"];
+  const timeValidation = useMemo(()=>{
+    if(!data.start_time || !data.end_time || !data.duration) return null;
+    
+    const start = new Date(data.start_time);
+    const end = new Date(data.end_time);
+    const duration = parseInt(data.duration, 10) || 0;
+    
+    const diffInMs = end - start;
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    
+    if(diffInMinutes < 0){
+      return{
+        isError : true,
+        message: "Waktu Selesai tidak boleh lebih awal dari waktu mulai"
+      }
+    }
+
+    if(duration > diffInMinutes){
+      return{
+        isError : true,
+        message: `Durasi melebihi rentang waktu ujian yang tersedia yaitu (${diffInMinutes} menit). Harus Lebih dari ${duration} menit`
+      }
+    }
+
+    return null;
+  }, [data.start_time, data.end_time, data.duration]);
 
   return (
     // HAPUS max-h-[600px] agar tidak membatasi tinggi secara paksa
@@ -133,6 +160,16 @@ export default function TestForm({
                 value={data.duration}
                 onChange={(e) => setData("duration", e.target.value)}
               />
+              {timeValidation?.isError && (
+                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-pulse">
+                    <svg className="w-5 h-5 text-red-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <p className="text-xs text-red-700 font-bold">
+                      {timeValidation.message}
+                    </p>
+                  </div>
+                )}
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-gray-500 uppercase">
                   Status
