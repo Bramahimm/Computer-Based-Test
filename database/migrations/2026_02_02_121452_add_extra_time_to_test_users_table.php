@@ -9,9 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('test_users', function (Blueprint $table) {
-            // Menambahkan kolom extra_time (integer, default 0)
-            // Ditaruh setelah kolom finished_at biar rapi
-            $table->integer('extra_time')->default(0)->nullable()->after('finished_at');
+            $table->double('extra_time', 8, 2)->default(0)->nullable()->after('finished_at');
         });
     }
 

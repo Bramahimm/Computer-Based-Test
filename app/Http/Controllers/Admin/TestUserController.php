@@ -202,11 +202,16 @@ class TestUserController extends Controller
 
             // Hitung kompensasi waktu per user
             if ($testUser->locked_at) {
-                $lockedTime = Carbon::parse($testUser->locked_at);
-                $diffInMinutes = $lockedTime->diffInMinutes(now());
+                $lockedAt = \Carbon\Carbon::parse($testUser->locked_at);
+                $now = now();
+                
+                $diffInSeconds = $lockedAt->diffInSeconds($now);
+                $bufferLag = 15;                
+                $totalSecondsToAdd = $diffInSeconds + $bufferLag;
 
-                // Tambah extra time
-                $dataToUpdate['extra_time'] = $testUser->extra_time + $diffInMinutes;
+                $minutesToAdd = $totalSecondsToAdd / 60;
+
+                $testUser->extra_time = ($testUser->extra_time ?? 0) + $minutesToAdd;
             }
 
             $testUser->update($dataToUpdate);

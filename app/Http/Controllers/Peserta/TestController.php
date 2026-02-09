@@ -256,41 +256,24 @@ class TestController extends Controller
     /**
      * Cek Status & Sisa Waktu (Polling)
      */
-    public function checkStatus(TestUser $testUser)
-    {
-        if ($testUser->user_id !== \Illuminate\Support\Facades\Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+public function checkStatus(TestUser $testUser)
+{
+    $baseDuration = ($testUser->test->duration + $testUser->extra_time) * 60; // detik
 
-        $testUser->refresh();
-
-        // 1. Cek Kunci
-        if ($testUser->is_locked) {
-            return response()->json([
-                'status' => 'locked',
-                'force_stop' => true,
-                'message' => 'Ujian Anda dikunci sementara oleh pengawas. Alasan: ' . ($testUser->lock_reason ?? 'Hubungi Pengawas')
-            ]);
-        }
-
-        // 2. Cek Selesai
-        if ($testUser->status === 'submitted' || $testUser->status === 'expired') {
-            return response()->json([
-                'status' => $testUser->status,
-                'force_stop' => true,
-                'message' => 'Ujian telah selesai atau dihentikan oleh pengawas.'
-            ]);
-        }
-
-        // 3. Hitung Waktu
-        // 🔥 PERBAIKAN DI SINI: Hapus '\App\Services\' agar pakai 'use' di atas
-        $remaining = ExamTimeService::remainingSeconds($testUser);
-
-        return response()->json([
-            'status' => 'ongoing',
-            'remaining_seconds' => $remaining,
-            'server_time' => now()->toTimeString(),
-            'extra_time' => $testUser->extra_time
-        ]);
+    if ($testUser->is_locked && $testUser->locked_at) {
+        // Hanya hitung sampai waktu dikunci
+        $elapsed = $testUser->locked_at->diffInSeconds($testUser->started_at);
+        $remaining = $baseDuration - $elapsed;
+    } else {
+        // Normal
+        $elapsed = now()->diffInSeconds($testUser->started_at);
+        $remaining = $baseDuration - $elapsed;
     }
+
+    return response()->json([
+        'status' => $testUser->is_locked ? 'locked' : 'ongoing',
+        'remaining_seconds' => max(0, $remaining),
+        'message' => $testUser->lock_reason,
+    ]);
+}
 }

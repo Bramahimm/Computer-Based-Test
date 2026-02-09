@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Head, usePage, router } from '@inertiajs/react';
+import { Head, usePage, router, Link } from '@inertiajs/react'; 
 import axios from 'axios'; 
-import { Menu, Clock, BookOpen, Calendar, AlertCircle } from 'lucide-react';
+import { Menu, Clock, BookOpen, Calendar, AlertCircle, Lock, LogOut } from 'lucide-react'; 
 import Swal from 'sweetalert2'; 
 
 // Import Komponen Anak
@@ -18,7 +18,12 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
     const [answers, setAnswers] = useState(existingAnswers || {});
     const [timeLeft, setTimeLeft] = useState(remainingSeconds);
     
-    // Ref untuk menyimpan waktu agar bisa dibaca di dalam interval tanpa reset
+    // 🔥 1. STATE LOCK (WAJIB ADA)
+    const [isLocked, setIsLocked] = useState(false); 
+    const [lockMessage, setLockMessage] = useState('');
+    
+    // 🔥 2. REF (WAJIB ADA UNTUK INTERVAL)
+    const isLockedRef = useRef(false);
     const timeLeftRef = useRef(timeLeft);
 
     // UI State
@@ -43,21 +48,24 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
 
     // --- EFFECTS ---
 
-    // 1. Sync Ref dengan State (PENTING)
     useEffect(() => {
         timeLeftRef.current = timeLeft;
     }, [timeLeft]);
 
-    // 2. Jam Dinding Header
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    // 3. LOGIC UTAMA: TIMER MUNDUR & POLLING STATUS (DIGABUNG DI SINI)
+    // --- LOGIC UTAMA: TIMER & POLLING ---
     useEffect(() => {
-        // A. Timer Mundur (Jalan Tiap Detik)
+        // A. Timer Mundur (Visual)
         const countdown = setInterval(() => {
+            // 🔥 KODE INI YANG MEMBUAT WAKTU BERHENTI 🔥
+            if (isLockedRef.current) {
+                return; // Jangan kurangi waktu jika dikunci
+            }
+
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(countdown);
@@ -68,94 +76,64 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
             });
         }, 1000);
 
-        // B. Fungsi Cek Status ke Server
+        // B. Polling Server
         const checkServerStatus = async () => {
             try {
-                // Anti-Cache
                 const url = route('peserta.tests.check-status', testUserId) + '?_t=' + new Date().getTime();
                 const response = await axios.get(url);
                 const data = response.data;
 
-                // 1. CEK STATUS (Locked / Submitted / Force Stop)
-                if (data.force_stop || data.status !== 'ongoing') {
-                    // Tentukan pesan berdasarkan status
-                    let title = 'Ujian Berakhir';
-                    let text = 'Sesi ujian Anda telah berakhir.';
-                    let icon = 'warning';
-
-                    if (data.status === 'locked') {
-                        title = 'Ujian Dikunci!';
-                        text = data.message || 'Anda dikunci sementara oleh pengawas.';
-                        icon = 'error';
-                    } else if (data.status === 'submitted') {
-                        title = 'Ujian Selesai';
-                        text = 'Pengawas telah menghentikan ujian.';
-                    }
-
-                    Swal.fire({
-                        icon: icon,
-                        title: title,
-                        text: text,
-                        allowOutsideClick: false,
-                        confirmButtonText: 'Kembali ke Dashboard',
-                        confirmButtonColor: '#d33'
-                    }).then(() => {
-                        window.location.href = route('peserta.dashboard');
-                    });
-                    return; // Stop logic di sini
-                }
-
-                // 2. CEK SINKRONISASI WAKTU
-                const localTime = timeLeftRef.current;
-                const serverTime = data.remaining_seconds;
-                const diff = serverTime - localTime;
-
-                // Jika selisih > 5 detik (Server lebih cepat/lambat)
-                if (Math.abs(diff) > 5) {
-                    console.log(`Sync Waktu: Lokal ${localTime} vs Server ${serverTime}`);
-                    
-                    // Alert jika waktu BERTAMBAH signifikan (> 30 detik)
-                    if (diff > 30) {
-                         const addedMinutes = Math.floor(diff / 60);
-                         Swal.fire({
-                            icon: 'success',
-                            title: 'Waktu Ditambahkan!',
-                            text: `Pengawas menambahkan waktu ${addedMinutes} menit.`,
-                            timer: 4000,
-                            toast: true,
-                            position: 'top-end',
+                // --- HANDLE LOCKED ---
+                if (data.status === 'locked') {
+                    if (!isLockedRef.current) {
+                        isLockedRef.current = true;
+                        setIsLocked(true);
+                        
+                        // Update pesan admin
+                        setLockMessage(data.message || 'Ujian dijeda pengawas.');
+                        
+                        Swal.fire({
+                            title: 'UJIAN DIJEDA',
+                            text: data.message,
+                            icon: 'warning',
                             showConfirmButton: false,
-                            background: '#ecfdf5',
-                            color: '#065f46'
-                         });
+                            timer: 3000
+                        });
                     }
-                    
-                    // Update Timer Lokal
-                    setTimeLeft(serverTime);
+                    // 🔥 JANGAN UPDATE WAKTU DARI SERVER SAAT LOCKED
+                    return; 
                 }
 
-            } catch (error) {
-                console.error("Gagal polling server:", error);
-                // Jika error 401/403 (Sesi habis), reload halaman
-                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                    window.location.reload();
+                // --- HANDLE UNLOCK ---
+                if (isLockedRef.current && data.status === 'ongoing') {
+                    isLockedRef.current = false;
+                    setIsLocked(false);
+                    Swal.fire({ title: 'Dilanjutkan!', icon: 'success', timer: 1500, showConfirmButton: false });
                 }
-            }
+
+                // --- SINKRONISASI WAKTU (Hanya saat TIDAK locked) ---
+                if (!isLockedRef.current && data.remaining_seconds) {
+                    const diff = Math.abs(data.remaining_seconds - timeLeftRef.current);
+                    if (diff > 3) setTimeLeft(data.remaining_seconds);
+                }
+
+                // --- HANDLE STOP ---
+                if (data.force_stop || data.status === 'submitted' || data.status === 'expired') {
+                     window.location.href = route('peserta.dashboard');
+                }
+
+            } catch (error) { console.error(error); }
         };
 
-        // C. Jalankan Polling (Jalan Tiap 5 Detik)
         const poller = setInterval(checkServerStatus, 5000);
 
-        // Cleanup saat component unmount
         return () => {
             clearInterval(countdown);
             clearInterval(poller);
         };
-    }, []); // Dependency array kosong aman karena kita pakai functional update & Ref
+    }, []);
 
-    // --- NAVIGASI & SUBMIT ---
-    
-    // Disable Klik Kanan
+    // --- NAVIGASI & UTILS ---
     useEffect(() => {
         const handleContext = (e) => e.preventDefault();
         document.addEventListener('contextmenu', handleContext);
@@ -163,6 +141,7 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
     }, []);
 
     const changeQuestion = (newIndex) => {
+        if (isLockedRef.current) return; // Cegah ganti soal saat lock
         if (newIndex < 0 || newIndex >= questions.length) return;
         setCurrentIndex(newIndex);
         setIsSidebarOpen(false);
@@ -177,22 +156,52 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
     };
 
     const handleAutoSubmit = () => {
-        Swal.fire({
-            title: 'Waktu Habis!',
-            text: 'Jawaban dikirim otomatis.',
-            icon: 'info',
-            timer: 2000,
-            showConfirmButton: false,
-            allowOutsideClick: false
-        }).then(() => submitTest());
+        Swal.fire({ title: 'Waktu Habis!', timer: 2000, showConfirmButton: false }).then(() => submitTest());
     };
 
     const dateOption = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative">
             <Head title={`Ujian: ${test.title}`} />
             
+            {/* 🔥 4. OVERLAY SCREEN SAAT DIKUNCI */}
+            {isLocked && (
+                <div className="fixed inset-0 z-[100] bg-gray-900/95 backdrop-blur flex flex-col items-center justify-center text-white p-6 text-center transition-all duration-300">
+                    <div className="bg-white/10 p-6 rounded-full mb-6 animate-pulse">
+                        <Lock className="w-16 h-16 text-red-400" />
+                    </div>
+                    
+                    <h1 className="text-4xl font-bold mb-4 tracking-tight">UJIAN DIJEDA</h1>
+                    
+                    <div className="bg-white/10 px-6 py-4 rounded-xl max-w-lg mb-8 border border-white/10">
+                        <p className="text-yellow-300 font-bold mb-1 text-sm uppercase tracking-wider">Pesan Pengawas:</p>
+                        <p className="text-white text-lg leading-relaxed">
+                            "{lockMessage}"
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-4 items-center">
+                        {/* Timer Statis (Beku) */}
+                        <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10">
+                            <Clock className="w-6 h-6 text-gray-400" />
+                            <span className="font-mono text-2xl font-bold tracking-widest text-gray-400">
+                                {formatTime(timeLeft)}
+                            </span>
+                        </div>
+
+                        {/* Tombol Kembali ke Dashboard */}
+                        <Link 
+                            href={route('peserta.dashboard')}
+                            className="mt-4 flex items-center gap-2 px-6 py-2 bg-transparent border border-gray-600 text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-all text-sm font-medium"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Kembali ke Dashboard
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {/* HEADER */}
             <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center px-4 md:px-6 fixed top-0 inset-x-0 z-30 justify-between">
                 <div className="flex items-center gap-4">
@@ -205,20 +214,14 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
                     </div>
                 </div>
                 <div className="hidden md:flex items-center gap-3 text-xs md:text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">{currentTime.toLocaleDateString('id-ID', dateOption)}</span>
-                    </div>
-                    <div className="w-px h-4 bg-gray-300"></div>
-                    <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <span className="font-mono font-bold text-gray-800">{currentTime.toLocaleTimeString('id-ID')}</span>
-                    </div>
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <span className="font-mono font-bold text-gray-800">{currentTime.toLocaleTimeString('id-ID')}</span>
                 </div>
             </header>
 
             {/* MAIN CONTENT */}
-            <main className="flex-1 pt-20 pb-8 px-4 md:px-6 max-w-[1600px] mx-auto w-full grid grid-cols-12 gap-6 items-start">
+            <main className={`flex-1 pt-20 pb-8 px-4 md:px-6 max-w-[1600px] mx-auto w-full grid grid-cols-12 gap-6 items-start ${isLocked ? 'blur-sm pointer-events-none' : ''}`}>
+                
                 {/* Sidebar Navigasi */}
                 <aside className={`lg:col-span-3 lg:block lg:sticky lg:top-24 space-y-4 ${isSidebarOpen ? 'fixed inset-0 z-40 bg-white p-4 overflow-y-auto block' : 'hidden'}`}>
                     <div className="flex justify-between items-center lg:hidden mb-4">
@@ -234,7 +237,7 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
                         </h3>
                         <Navigation questions={questions} current={currentIndex} answers={answers} onJump={changeQuestion} />
                     </div>
-                    <button onClick={() => setShowSubmitModal(true)} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all text-sm active:scale-95">
+                    <button onClick={() => setShowSubmitModal(true)} disabled={isLocked} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all text-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                         Selesai Ujian
                     </button>
                 </aside>
@@ -246,11 +249,11 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
                         question={currentQuestion}
                         selectedAnswer={answers[currentQuestion.id]}
                         testUserId={testUserId}
-                        onAnswer={(val) => setAnswers(prev => ({...prev, [currentQuestion.id]: val}))}
+                        onAnswer={(val) => !isLocked && setAnswers(prev => ({...prev, [currentQuestion.id]: val}))}
                     />
                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm md:bg-transparent md:border-0 md:shadow-none md:p-0">
-                        <button onClick={() => changeQuestion(currentIndex - 1)} disabled={currentIndex === 0} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 font-bold shadow-sm transition-all">← Sebelumnya</button>
-                        <button onClick={() => changeQuestion(currentIndex + 1)} disabled={currentIndex === questions.length - 1} className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 font-bold shadow-md transition-all">Selanjutnya →</button>
+                        <button onClick={() => changeQuestion(currentIndex - 1)} disabled={currentIndex === 0 || isLocked} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 font-bold shadow-sm transition-all">← Sebelumnya</button>
+                        <button onClick={() => changeQuestion(currentIndex + 1)} disabled={currentIndex === questions.length - 1 || isLocked} className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 font-bold shadow-md transition-all">Selanjutnya →</button>
                     </div>
                 </section>
 
@@ -259,14 +262,15 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className={`px-5 py-3 border-b border-gray-200 text-xs font-bold uppercase tracking-wider flex justify-between items-center ${timeLeft < 300 ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'}`}>
                             <span>Sisa Waktu</span>
-                            {timeLeft < 300 && <AlertCircle className="w-4 h-4 animate-pulse" />}
+                            {isLocked ? <Lock className="w-4 h-4 text-red-500" /> : (timeLeft < 300 && <AlertCircle className="w-4 h-4 animate-pulse" />)}
                         </div>
                         <div className="p-6 flex justify-center">
-                            <div className={`text-4xl font-mono font-bold tracking-widest ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>
-                                {formatTime(timeLeft)}
+                            <div className={`text-4xl font-mono font-bold tracking-widest ${isLocked ? 'text-gray-400' : (timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-800')}`}>
+                                {isLocked ? "PAUSED" : formatTime(timeLeft)}
                             </div>
                         </div>
                     </div>
+                    
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">Peserta Ujian</div>
                         <div className="p-5">
