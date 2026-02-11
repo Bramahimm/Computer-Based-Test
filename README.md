@@ -1,4 +1,4 @@
-# TCExam CBT Platform
+# Computer-Based-Test CBT Platform
 
 > Platform Computer Based Test (CBT) untuk mengelola bank soal, jadwal ujian, peserta, serta pemantauan hasil secara realtime. Aplikasi dibangun dengan Laravel 10 + Inertia React + TailwindCSS agar admin maupun peserta mendapatkan pengalaman yang konsisten.
 
@@ -23,7 +23,7 @@
 
 ## Gambaran Umum
 
-TCExam memfasilitasi seluruh siklus CBT: mulai dari import peserta dan soal, menyusun modul-topik, merancang ujian, mengatur akses peserta, memantau pengerjaan secara realtime, sampai menilai serta mengekspor hasil. Rute admin berada di [routes/admin.php](routes/admin.php) sedangkan rute peserta berada di [routes/peserta.php](routes/peserta.php), keduanya diamankan oleh middleware otentikasi, aktivasi akun, dan validasi peran.
+Computer-Based-Test memfasilitasi seluruh siklus CBT: mulai dari import peserta dan soal, menyusun modul-topik, merancang ujian, mengatur akses peserta, memantau pengerjaan secara realtime, sampai menilai serta mengekspor hasil. Rute admin berada di [routes/admin.php](routes/admin.php) sedangkan rute peserta berada di [routes/peserta.php](routes/peserta.php), keduanya diamankan oleh middleware otentikasi, aktivasi akun, dan validasi peran.
 
 ## Fitur Utama
 
@@ -152,7 +152,7 @@ sequenceDiagram
 2. **Clone & Dependensi**
     ```bash
     git clone <repo-url>
-    cd TCExam
+    cd Computer-Based-Test
     composer install
     npm install
     ```
