@@ -3,6 +3,7 @@ import { Head, usePage, router, Link } from '@inertiajs/react';
 import axios from 'axios'; 
 import { Menu, Clock, BookOpen, Calendar, AlertCircle, Lock, LogOut } from 'lucide-react'; 
 import Swal from 'sweetalert2'; 
+import DynamicError from '@/Pages/Errors/DynamicError';
 
 // Import Komponen Anak
 import QuestionCard from "./Components/QuestionCard";
@@ -30,6 +31,7 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [fatalError, setFatalError] = useState(null);
 
     const currentQuestion = questions[currentIndex];
 
@@ -53,12 +55,14 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
     }, [timeLeft]);
 
     useEffect(() => {
+        if (fatalError) return;
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [fatalError]);
 
     // --- LOGIC UTAMA: TIMER & POLLING ---
     useEffect(() => {
+        if (fatalError) return;
         // A. Timer Mundur (Visual)
         const countdown = setInterval(() => {
             // 🔥 KODE INI YANG MEMBUAT WAKTU BERHENTI 🔥
@@ -131,7 +135,7 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
             clearInterval(countdown);
             clearInterval(poller);
         };
-    }, []);
+    }, [fatalError]);
 
     // --- NAVIGASI & UTILS ---
     useEffect(() => {
@@ -160,6 +164,15 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
     };
 
     const dateOption = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+    if (fatalError) {
+        return (
+            <DynamicError
+                status={fatalError.status || 503}
+                message={fatalError.message || 'Koneksi terputus. Silakan hubungi pengawas dan periksa jaringan Anda.'}
+            />
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative">
@@ -250,6 +263,7 @@ export default function Start({ test, testUserId, questions, remainingSeconds, e
                         selectedAnswer={answers[currentQuestion.id]}
                         testUserId={testUserId}
                         onAnswer={(val) => !isLocked && setAnswers(prev => ({...prev, [currentQuestion.id]: val}))}
+                        onFatalError={setFatalError}
                     />
                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm md:bg-transparent md:border-0 md:shadow-none md:p-0">
                         <button onClick={() => changeQuestion(currentIndex - 1)} disabled={currentIndex === 0 || isLocked} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 font-bold shadow-sm transition-all">← Sebelumnya</button>

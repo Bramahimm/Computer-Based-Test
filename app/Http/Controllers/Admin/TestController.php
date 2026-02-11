@@ -105,8 +105,8 @@ class TestController extends Controller
         }
 
         return inertia('Admin/Tests/Index', [
-            // List Ujian (Pagination 10 sudah cukup untuk daftar ujian)
-            'tests' => $query->paginate(10)->appends($request->query()),
+            // List Ujian (Pagination 20 agar daftar lebih panjang)
+            'tests' => $query->paginate(20)->withQueryString(),
 
             // Data Dropdown
             'modules' => Module::select('id', 'name')->where('is_active', true)->orderBy('name')->get(),
@@ -145,6 +145,10 @@ class TestController extends Controller
         return inertia('Admin/Tests/Create', [
             'groups' => Group::all(),
             'topics' => Topic::with('module')->where('is_active', true)->get(),
+            'modules' => Module::select('id', 'name')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
         ]);
     }
     /* ================= STORE ================= */
@@ -213,6 +217,10 @@ class TestController extends Controller
             'test' => $test,
             'groups' => Group::all(),
             'topics' => Topic::with('module')->where('is_active', true)->get(),
+            'modules' => Module::select('id', 'name')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

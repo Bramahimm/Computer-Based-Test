@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, X } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 
-export default function Alert({ errors = {} }) {
+export default function Alerts({ errors = {} }) {
     const { flash } = usePage().props;
     
     // Cek apakah ada error validasi atau flash error

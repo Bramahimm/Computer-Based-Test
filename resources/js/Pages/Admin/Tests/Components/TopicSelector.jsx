@@ -14,9 +14,19 @@ export default function TopicSelector({
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
 
-  const selectedId = Array.isArray(selectedTopics)
-    ? selectedTopics[0]
-    : selectedTopics;
+  const extractTopicId = (value) => {
+    if (!value) return "";
+    if (Array.isArray(value)) {
+      return extractTopicId(value[0]);
+    }
+    if (typeof value === "object") {
+      return value.id ?? "";
+    }
+    return value;
+  };
+
+  const selectedId = extractTopicId(selectedTopics);
+  const normalizedSelectedId = selectedId ? String(selectedId) : "";
 
   // Smart Positioning Logic
   useLayoutEffect(() => {
@@ -48,7 +58,9 @@ export default function TopicSelector({
     setSearchTerm("");
   };
 
-  const currentTopic = topics.find((t) => t.id === selectedId);
+  const currentTopic = topics.find(
+    (t) => String(t.id) === normalizedSelectedId,
+  );
   const filtered = topics.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -126,7 +138,7 @@ export default function TopicSelector({
                   key={t.id}
                   onClick={() => handleSelect(t.id)}
                   className={`flex flex-col px-3 py-2.5 rounded-xl cursor-pointer ${
-                    t.id === selectedId
+                    String(t.id) === normalizedSelectedId
                       ? "bg-blue-50 text-blue-700"
                       : "hover:bg-gray-50 text-gray-600"
                   }`}>

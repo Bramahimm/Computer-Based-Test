@@ -1,41 +1,79 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 
-export default function EssayInput({ question, selectedAnswer, testUserId, onAnswer }) {
+export default function EssayInput({ question, selectedAnswer, testUserId, onAnswer, onFatalError }) {
     const [text, setText] = useState("");
     const [status, setStatus] = useState("idle"); // idle, saving, saved, error
+    const NETWORK_TIMEOUT = 6000;
 
     // Load jawaban yang sudah ada (jika user kembali ke soal ini)
     useEffect(() => {
         if (selectedAnswer?.answerText) {
             setText(selectedAnswer.answerText);
+        } else {
+            setText("");
         }
+        setStatus("idle");
     }, [selectedAnswer]);
 
-    // EssayInput.jsx
+    const buildErrorMessage = (error) => {
+        const networkHint = "Jawaban belum tersimpan karena koneksi terputus. Periksa kabel LAN atau jaringan Anda, lalu coba lagi.";
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            return networkHint;
+        }
+        if (!error?.response || error?.code === "ERR_NETWORK" || error?.code === "ERR_CANCELED") {
+            return networkHint;
+        }
+        return "Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.";
+    };
 
-const handleSave = async () => {
-    if (text === selectedAnswer?.answerText) return;
+    const triggerFatalError = (error) => {
+        const message = buildErrorMessage(error);
+        onFatalError?.({ status: 503, message });
+    };
 
-    setStatus("saving");
-    onAnswer({ answerText: text });
+    useEffect(() => {
+        const handleOffline = () => {
+            triggerFatalError();
+        };
 
-    try {
-        // PERBAIKAN: Gunakan format objek untuk parameter testUser 
-        // dan pastikan parameter name sesuai dengan {testUser} di web.php
-        await axios.post(route("peserta.tests.answer", { testUser: testUserId }), {
-            question_id: question.id,
-            answer_text: text,
-            answer_id: null // Tambahkan secara eksplisit null untuk essay
-        });
-        
-        setStatus("saved");
-        setTimeout(() => setStatus("idle"), 2000);
-    } catch (error) {
-        console.error(error);
-        setStatus("error");
-    }
-};
+        window.addEventListener('offline', handleOffline);
+        return () => window.removeEventListener('offline', handleOffline);
+    }, []);
+
+    const saveEssayAnswer = async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT);
+
+        try {
+            await axios.post(route("peserta.tests.answer", { testUser: testUserId }), {
+                question_id: question.id,
+                answer_text: text,
+                answer_id: null,
+            }, {
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    };
+
+    const handleSave = async () => {
+
+        setStatus("saving");
+        onAnswer({ answerText: text });
+
+        try {
+            await saveEssayAnswer();
+
+            setStatus("saved");
+            setTimeout(() => setStatus("idle"), 2000);
+        } catch (error) {
+            console.error(error);
+            setStatus("error");
+            triggerFatalError(error);
+        }
+    };
 
     return (
         <div className="space-y-2">
@@ -57,9 +95,6 @@ const handleSave = async () => {
                 )}
                 {status === "saved" && (
                     <span className="text-green-600 font-medium">✓ Tersimpan</span>
-                )}
-                {status === "error" && (
-                    <span className="text-red-500 font-medium">⚠ Gagal menyimpan</span>
                 )}
             </div>
         </div>

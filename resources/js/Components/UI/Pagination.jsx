@@ -6,8 +6,11 @@ export default function Pagination({ links = [] }) {
     // Jika link hanya 3 (Previous, 1, Next), berarti cuma 1 halaman. Tidak perlu tampil.
     if (links.length <= 3) return null;
 
+    const isScrollable = links.length > 8;
+
     return (
-        <div className="flex flex-wrap justify-center items-center gap-1 py-4">
+        <div className={`${isScrollable ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2' : ''}`}>
+            <div className={`flex items-center gap-1 py-4 ${isScrollable ? 'min-w-max pr-6' : 'flex-wrap justify-center'}`}>
             {links.map((link, key) => {
                 // Label handling (mengubah &laquo; menjadi icon)
                 let label = link.label;
@@ -39,6 +42,7 @@ export default function Pagination({ links = [] }) {
                     </Link>
                 );
             })}
+            </div>
         </div>
     );
 }

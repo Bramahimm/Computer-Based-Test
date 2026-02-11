@@ -6,6 +6,7 @@ import TestTable from "./TestTable";
 import TestForm from "./TestForm";
 import DataFilter from "@/Components/Shared/DataFilter";
 import { initialForm, transformForEdit } from "../Config/FormSchema";
+import Pagination from "@/Components/UI/Pagination";
 
 export default function TestManagement({
   tests,
@@ -155,6 +156,11 @@ export default function TestManagement({
     });
   };
 
+  const paginatedTests = useMemo(() => {
+    if (tests?.data) return tests;
+    return { data: Array.isArray(tests) ? tests : [], links: [], meta: null };
+  }, [tests]);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden text-left">
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
@@ -190,7 +196,7 @@ export default function TestManagement({
         />
 
         <TestTable
-          tests={tests.data || []}
+          tests={paginatedTests.data || []}
           isStatisticMode={isStatisticMode}
           onEdit={openModal}
           onDelete={(id) =>
@@ -198,6 +204,18 @@ export default function TestManagement({
             router.delete(route("admin.tests.destroy", id))
           }
         />
+
+        {paginatedTests.meta && (
+          <p className="text-[11px] text-gray-500 mt-4">
+            Menampilkan {paginatedTests.meta.from}-{paginatedTests.meta.to} dari {paginatedTests.meta.total} ujian
+          </p>
+        )}
+
+        {paginatedTests.links && paginatedTests.links.length > 0 && (
+          <div className="mt-4 -mx-4 px-4">
+            <Pagination links={paginatedTests.links} />
+          </div>
+        )}
       </div>
 
       <Modal

@@ -1,202 +1,255 @@
-    import React, { useState } from 'react';
-    import jsPDF from 'jspdf';
-    import autoTable from 'jspdf-autotable';
-    import { Download, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Download, Loader2 } from 'lucide-react';
 
-    export default function ExportPdfStatistics({ test, stats, questions }) {
-        const [isGenerating, setIsGenerating] = useState(false);
+export default function ExportPdfStatistics({ test, stats, questions }) {
+    const [isGenerating, setIsGenerating] = useState(false);
 
-        // --- 1. LOAD FONT ROBOTO (Wajib agar simbol muncul) ---
-        const loadFont = async (doc) => {
-            try {
-                // URL Font Roboto (Support simbol matematika & unicode)
-                const fontURL = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf";
-                const response = await fetch(fontURL);
-                if (!response.ok) throw new Error("Gagal download font");
-                
-                const blob = await response.blob();
-                const reader = new FileReader();
-                
-                return new Promise((resolve) => {
-                    reader.onloadend = () => {
-                        // Ambil base64 murni (hapus 'data:font/ttf;base64,')
-                        const base64data = reader.result.split(',')[1];
-                        
-                        // Tambahkan ke VFS jsPDF
-                        doc.addFileToVFS("Roboto-Regular.ttf", base64data);
-                        doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-                        doc.setFont("Roboto"); // Set aktif
-                        resolve(true);
-                    };
-                    reader.readAsDataURL(blob);
-                });
-            } catch (e) {
-                console.error("Gagal memuat font kustom, simbol mungkin tidak muncul.", e);
-                return false; // Lanjut dengan font standar jika gagal
-            }
-        };
-
-        // --- 2. DOWNLOAD GAMBAR ---
-        const getBase64ImageFromURL = (url) => {
+    // --- 1. LOAD FONT ROBOTO ---
+    const loadFont = async (doc) => {
+        try {
+            const fontURL = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf";
+            const response = await fetch(fontURL);
+            const blob = await response.blob();
+            const reader = new FileReader();
             return new Promise((resolve) => {
-                if (!url) { resolve(null); return; }
-                const img = new Image();
-                img.setAttribute("crossOrigin", "anonymous");
-                img.src = url.startsWith('http') ? url : `/storage/${url}`;
-                img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL("image/jpeg"));
+                reader.onloadend = () => {
+                    const base64data = reader.result.split(',')[1];
+                    doc.addFileToVFS("Roboto-Regular.ttf", base64data);
+                    doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+                    doc.setFont("Roboto");
+                    resolve(true);
                 };
-                img.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
             });
-        };
+        } catch (e) {
+            console.error("Gagal memuat font kustom", e);
+            return false;
+        }
+    };
 
-        // --- 3. BERSIHKAN HTML (TAPI JANGAN UBAH SIMBOL) ---
-        const stripHtml = (html) => {
-            if (!html) return "";
+    // --- 2. DOWNLOAD GAMBAR (FIXED UNTUK LOGO) ---
+    const getBase64ImageFromURL = (url) => {
+        return new Promise((resolve) => {
+            if (!url) { resolve(null); return; }
+            const img = new Image();
+            img.setAttribute("crossOrigin", "anonymous");
+            
+            // Memastikan URL absolut agar logo terpanggil di Laragon
+            const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
+            img.src = fullUrl;
 
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = html;
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+                // Gunakan PNG untuk logo agar transparansi terjaga
+                resolve(canvas.toDataURL("image/png"));
+            };
+            img.onerror = () => {
+                console.error("Gagal load logo di path: " + fullUrl);
+                resolve(null);
+            };
+        });
+    };
 
-            // Hapus elemen sampah KaTeX (MathML) yang bikin teks ganda
-            const mathML = tempDiv.querySelectorAll('math, .katex-mathml, annotation');
-            mathML.forEach(el => el.remove());
+    const stripHtml = (html) => {
+        if (!html) return "";
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+        const mathML = tempDiv.querySelectorAll('math, .katex-mathml, annotation');
+        mathML.forEach(el => el.remove());
+        return (tempDiv.textContent || tempDiv.innerText || "").trim().replace(/\s+/g, ' ');
+    };
 
-            // Hapus style/script
-            const scripts = tempDiv.querySelectorAll('script, style');
-            scripts.forEach(el => el.remove());
+    const exportPDF = async () => {
+        setIsGenerating(true);
+        const doc = new jsPDF('p', 'mm', 'a4');
 
-            // Ambil teks murni (Simbol α, β, ° akan tetap utuh)
-            // Kita TIDAK melakukan replace manual lagi disini.
-            return (tempDiv.textContent || tempDiv.innerText || "").trim().replace(/\s+/g, ' ');
-        };
+        await loadFont(doc);
+        
+        // Memanggil logo dari folder public Laragon
+        const logoBase64 = await getBase64ImageFromURL("/favicon.png");
 
-        const exportPDF = async () => {
-            setIsGenerating(true);
-            const doc = new jsPDF();
+        // --- KOP SURAT PROFESIONAL ---
+        if (logoBase64) {
+            // x: 15, y: 10, w: 22, h: 22
+            doc.addImage(logoBase64, 'PNG', 15, 10, 22, 22);
+        }
 
-            // 🔥 STEP 1: Tunggu Load Font Dulu!
-            await loadFont(doc);
+        const centerX = 112; // Titik tengah teks di samping logo
+        doc.setTextColor(0, 0, 0);
+        
+        doc.setFont("Roboto", "normal");
+        doc.setFontSize(10);
+        doc.text("KEMENTERIAN RISET, TEKNOLOGI DAN PENDIDIKAN TINGGI", centerX, 14, { align: "center" });
+        
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(13);
+        doc.text("UNIVERSITAS LAMPUNG", centerX, 20, { align: "center" });
+        
+        doc.setFontSize(15);
+        doc.text("FAKULTAS KEDOKTERAN", centerX, 26, { align: "center" });
 
-            // Header
-            doc.setFontSize(12); doc.setFont("Roboto", "bold");
-            doc.text("FAKULTAS KEDOKTERAN", 14, 15);
-            doc.text("UNIVERSITAS LAMPUNG", 14, 21);
-            doc.setFontSize(9); doc.setFont("Roboto", "normal");
-            doc.text("Jalan Soemantri Brojonegoro no.1 Gedung B lt.3", 14, 27);
-            doc.setLineWidth(0.5); doc.line(14, 30, 196, 30);
+        doc.setFont("Roboto", "normal");
+        doc.setFontSize(8);
+        doc.text("Jalan Prof. Dr. Sumantri Brojonegoro No. 1 Telp/Fax (0721) 7691197 Bandar Lampung 35145", centerX, 31, { align: "center" });
+        doc.text("Laman : http://www.fk.unila.ac.id Email : dekanfkunila@yahoo.com", centerX, 35, { align: "center" });
 
-            // Info Ujian
-            doc.setFontSize(14); doc.setFont("Roboto", "bold");
-            doc.text("Laporan Analisis Butir Soal", 14, 40);
-            doc.setFontSize(10); doc.setFont("Roboto", "normal");
-            doc.text(`Mata Kuliah  : ${test?.title || '-'}`, 14, 48);
-            doc.text(`Kode   : ${test?.code || '-'}`, 14, 53);
-            doc.text(`Peserta: ${stats?.total_participants || 0} Mahasiswa`, 14, 58);
+        // Garis Double Kop
+        doc.setLineWidth(0.8);
+        doc.line(15, 38, 195, 38);
+        doc.setLineWidth(0.2);
+        doc.line(15, 39, 195, 39);
 
-            let finalY = 65;
+        // Judul Laporan
+        let finalY = 52;
+        doc.setFontSize(12);
+        doc.setFont("Roboto", "bold");
+        doc.text("LAPORAN ANALISIS BUTIR SOAL", 105, finalY, { align: "center" });
+        doc.setLineWidth(0.3);
+        doc.line(72, finalY + 1, 138, finalY + 1);
 
-            // Loop Soal
-            for (let i = 0; i < questions.length; i++) {
-                const q = questions[i];
-                
-                // Cek Halaman Baru
-                if (finalY > 250) { doc.addPage(); finalY = 20; }
+        finalY += 15;
 
-                // Tabel Statistik
+        // Info Ujian
+        doc.setFontSize(10);
+        doc.setFont("Roboto", "normal");
+        doc.text(`Mata Kuliah : ${test?.title || '-'}`, 15, finalY);
+        doc.text(`Total Peserta: ${stats?.total_participants || 0} Mahasiswa`, 15, finalY + 6);
+        doc.text(`Dicetak Pada : ${new Date().toLocaleString('id-ID')} WIB`, 15, finalY + 12);
+
+        finalY += 25;
+
+        // Loop Soal
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            if (finalY > 240) { doc.addPage(); finalY = 20; }
+
+            autoTable(doc, {
+                startY: finalY,
+                head: [['No', 'Tampil', 'Benar', 'Salah', 'Kosong']],
+                body: [[
+                    i + 1, 
+                    `${q.stats.recurrence}`, 
+                    `${q.stats.correct} (${q.stats.correct_pct}%)`,
+                    `${q.stats.wrong} (${q.stats.wrong_pct}%)`,
+                    `${q.stats.unanswered} (${q.stats.unanswered_pct}%)`
+                ]],
+                theme: 'grid',
+                styles: { fontSize: 8, halign: 'center', font: 'Roboto' },
+                headStyles: { fillColor: [240, 240, 240], textColor: 0 },
+                margin: { left: 15, right: 15 }
+            });
+
+            finalY = doc.lastAutoTable.finalY + 6;
+
+            if (q.question_image) {
+                const imgData = await getBase64ImageFromURL(q.question_image);
+                if (imgData) {
+                    const imgProps = doc.getImageProperties(imgData);
+                    const pdfWidth = 60; 
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    if (finalY + pdfHeight > 270) { doc.addPage(); finalY = 20; }
+                    doc.addImage(imgData, 'JPEG', 15, finalY, pdfWidth, pdfHeight);
+                    finalY += pdfHeight + 5;
+                }
+            }
+
+            const cleanQuestion = stripHtml(q.question_text || "");
+            doc.setFont("Roboto", "bold");
+            const splitTitle = doc.splitTextToSize(`${i+1}. ${cleanQuestion}`, 180);
+            if (finalY + (splitTitle.length * 5) > 275) { doc.addPage(); finalY = 20; }
+            doc.text(splitTitle, 15, finalY);
+            finalY += (splitTitle.length * 5) + 4;
+
+            if (q.answers && q.answers.length > 0) {
+                const answerData = q.answers.map((ans, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    const isKey = ans.is_correct ? ' (Kunci) ✔' : '';
+                    return [
+                        letter, 
+                        stripHtml(ans.answer_text) + isKey, 
+                        `${ans.selection_count} mhs`
+                    ];
+                });
+
                 autoTable(doc, {
                     startY: finalY,
-                    head: [['#', 'Tampil', 'Benar', 'Salah', 'Kosong']],
-                    body: [[
-                        i + 1, 
-                        `${q.stats.recurrence}`, 
-                        `${q.stats.correct} (${q.stats.correct_pct}%)`,
-                        `${q.stats.wrong} (${q.stats.wrong_pct}%)`,
-                        `${q.stats.unanswered} (${q.stats.unanswered_pct}%)`
-                    ]],
-                    theme: 'grid',
-                    styles: { fontSize: 9, halign: 'center', font: 'Roboto' }, // Gunakan Roboto
-                    headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
-                    margin: { left: 14, right: 14 }
+                    body: answerData,
+                    theme: 'plain',
+                    styles: { fontSize: 9, font: 'Roboto', cellPadding: 1 },
+                    columnStyles: { 
+                        0: { fontStyle: 'bold', cellWidth: 10 }, 
+                        2: { halign: 'right', cellWidth: 30 } 
+                    },
+                    margin: { left: 20 },
+                    didDrawCell: (data) => {
+                        if (data.section === 'body' && q.answers[data.row.index].is_correct) {
+                            doc.setTextColor(0, 150, 0);
+                        }
+                    }
                 });
-                finalY = doc.lastAutoTable.finalY + 5;
+                doc.setTextColor(0, 0, 0);
+                finalY = doc.lastAutoTable.finalY + 12;
+            } else {
+                const responses = q.student_responses || [];
+                doc.setFont("Roboto", "bold");
+                doc.setFontSize(10);
+                doc.text("Ringkasan Jawaban Essai", 15, finalY);
+                finalY += 6;
 
-                // Gambar Soal
-                if (q.question_image) {
-                    try {
-                        const imgData = await getBase64ImageFromURL(q.question_image);
-                        if (imgData) {
-                            const imgProps = doc.getImageProperties(imgData);
-                            const pdfWidth = 80; 
-                            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                            if (finalY + pdfHeight > 270) { doc.addPage(); finalY = 20; }
-                            doc.addImage(imgData, 'JPEG', 14, finalY, pdfWidth, pdfHeight);
-                            finalY += pdfHeight + 5;
-                        }
-                    } catch(e) { console.error(e); }
-                }
-
-                // Teks Soal
-                const cleanQuestion = stripHtml(q.question_text || "");
-                doc.setFont("Roboto", "bold"); doc.setFontSize(10);
-                
-                const splitTitle = doc.splitTextToSize(cleanQuestion, 180);
-                if (finalY + (splitTitle.length * 5) > 270) { doc.addPage(); finalY = 20; }
-                
-                doc.text(splitTitle, 14, finalY);
-                finalY += (splitTitle.length * 5) + 3;
-
-                // Jawaban
-                if (q.answers && q.answers.length > 0) {
-                    const answerData = q.answers.map((ans, idx) => {
-                        const letter = String.fromCharCode(65 + idx);
-                        const cleanAns = stripHtml(ans.answer_text || "");
-                        const isKey = ans.is_correct ? '✔' : ''; // Pakai simbol centang
-                        return [
-                            letter, 
-                            cleanAns + "  " + isKey, 
-                            `${ans.selection_count} (${ans.selection_pct}%)`
-                        ];
-                    });
-
-                    autoTable(doc, {
-                        startY: finalY,
-                        body: answerData,
-                        theme: 'plain',
-                        styles: { fontSize: 9, cellPadding: 1, font: 'Roboto' }, // Gunakan Roboto
-                        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 8 }, 2: { halign: 'right', cellWidth: 35 } },
-                        margin: { left: 14, right: 14 },
-                        didDrawCell: (data) => {
-                            if (data.section === 'body' && q.answers[data.row.index].is_correct) {
-                                doc.setTextColor(0, 128, 0); // Warna Hijau
-                            }
-                        }
-                    });
-                    doc.setTextColor(0, 0, 0); 
-                    finalY = doc.lastAutoTable.finalY + 10;
+                if (responses.length === 0) {
+                    doc.setFont("Roboto", "italic");
+                    doc.setFontSize(9);
+                    doc.text("Belum ada jawaban essai yang masuk.", 20, finalY);
+                    finalY += 6;
                 } else {
-                    doc.setFont("Roboto", "italic"); doc.setFontSize(9);
-                    doc.text("(Soal Esai - Lihat detail di web)", 14, finalY);
-                    finalY += 10;
+                    responses.forEach((resp, idx) => {
+                        if (finalY > 270) {
+                            doc.addPage();
+                            finalY = 20;
+                        }
+
+                        const statusMap = {
+                            correct: "Benar",
+                            wrong: "Salah",
+                            waiting: "Menunggu Penilaian",
+                        };
+                        const statusLabel = statusMap[resp.status] || "Belum Dinilai";
+                        const header = `${idx + 1}. ${resp.student_name || 'Peserta'} (${statusLabel})`;
+
+                        doc.setFont("Roboto", "bold");
+                        doc.setFontSize(9);
+                        doc.text(header, 20, finalY);
+                        finalY += 5;
+
+                        const cleanedText = stripHtml(resp.text || "(Tidak ada jawaban)");
+                        const wrapped = doc.splitTextToSize(cleanedText, 170);
+                        doc.setFont("Roboto", "normal");
+                        doc.setFontSize(9);
+                        doc.text(wrapped, 25, finalY);
+                        finalY += wrapped.length * 5 + 4;
+                    });
                 }
             }
+        }
 
-            doc.save(`Statistik_${test?.title || 'Ujian'}.pdf`);
-            setIsGenerating(false);
-        };
+        doc.save(`Analisis_Soal_${test?.title}.pdf`);
+        setIsGenerating(false);
+    };
 
-        return (
-            <button 
-                onClick={exportPDF}
-                disabled={isGenerating}
-                className={`bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-sm ${isGenerating ? 'opacity-70 cursor-not-allowed' : ''}`}
-            >
-                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {isGenerating ? 'Memproses PDF...' : 'Download PDF'}
-            </button>
-        );
-    }
+    return (
+        <button 
+            onClick={exportPDF}
+            disabled={isGenerating}
+            className={`bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 ${isGenerating ? 'opacity-70 cursor-not-allowed' : ''}`}
+        >
+            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+            {isGenerating ? 'Memproses PDF...' : 'Export Analisis PDF'}
+        </button>
+    );
+}

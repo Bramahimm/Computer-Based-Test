@@ -1,6 +1,7 @@
 // resources/js/Pages/Admin/Tests/Config/FormSchema.js
 
 export const initialForm = {
+  id: null,
   title: "",
   description: "",
   duration: 60,
@@ -14,6 +15,7 @@ export const initialForm = {
 };
 
 export const transformForEdit = (test) => ({
+  id: test.id,
   title: test.title || "",
   description: test.description || "",
   duration: test.duration || 60,
@@ -21,6 +23,10 @@ export const transformForEdit = (test) => ({
   end_time: test.end_time?.replace(" ", "T").substring(0, 16) || "",
   is_active: test.is_active,
   groups: test.groups?.map((g) => g.id) || [],
+  module_id:
+    test.topics?.[0]?.module_id ||
+    test.topics?.[0]?.module?.id ||
+    "",
   topics:
     test.topics?.map((t) => ({
       id: t.id, 

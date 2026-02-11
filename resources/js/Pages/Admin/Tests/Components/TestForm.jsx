@@ -1,13 +1,12 @@
 // resources/js/Pages/Admin/Tests/Components/TestForm.jsx
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Input from "@/Components/UI/Input";
 import GroupSelector from "./GroupSelector";
 import TopicSelector from "./TopicSelector";
 import ScoringTab from "./Advanced/ScoringTab";
 import BehaviorTab from "./Advanced/BehaviorTab";
 import ModuleSelector from "./ModuleSelector";
-import { useMemo } from "react";
 
 // TAMBAHKAN prop 'children' disini
 export default function TestForm({
@@ -16,11 +15,69 @@ export default function TestForm({
   errors,
   groups,
   topics,
-  modules,
+  modules = [],
   children,
+  editMode = false,
 }) {
   const [tab, setTab] = useState(0);
   const menus = ["Konfigurasi Utama", "Lanjutan"];
+  const availableModules = useMemo(() => {
+    if (Array.isArray(modules) && modules.length > 0) {
+      return modules;
+    }
+
+    const deduped = [];
+    const used = new Set();
+
+    (topics || []).forEach((topic) => {
+      const moduleSource = topic.module || {};
+      const moduleId = moduleSource.id ?? topic.module_id;
+      if (!moduleId || used.has(moduleId)) return;
+
+      used.add(moduleId);
+      deduped.push({
+        id: moduleId,
+        name: moduleSource.name || topic.module_name || "Tanpa Modul",
+      });
+    });
+
+    return deduped;
+  }, [modules, topics]);
+
+  const selectedTopicId = useMemo(() => {
+    if (!Array.isArray(data.topics) || data.topics.length === 0) {
+      return "";
+    }
+
+    const first = data.topics[0];
+    if (!first) return "";
+
+    if (typeof first === "object") {
+      return first.id ?? "";
+    }
+
+    return first;
+  }, [data.topics]);
+
+  useEffect(() => {
+    if (data.module_id || !selectedTopicId) {
+      return;
+    }
+
+    const topic = (topics || []).find((t) => t.id === selectedTopicId);
+    if (topic?.module_id) {
+      setData("module_id", topic.module_id);
+    }
+  }, [data.module_id, selectedTopicId, topics, setData]);
+
+  const normalizedModuleId = data.module_id ? String(data.module_id) : "";
+  const filteredTopics = useMemo(
+    () =>
+      (topics || []).filter((t) =>
+        normalizedModuleId ? String(t.module_id) === normalizedModuleId : true,
+      ),
+    [topics, normalizedModuleId],
+  );
   const timeValidation = useMemo(()=>{
     if(!data.start_time || !data.end_time || !data.duration) return null;
     
@@ -101,7 +158,7 @@ export default function TestForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
               <ModuleSelector
-                modules={modules || []}
+                modules={availableModules}
                 value={data.module_id}
                 onChange={(val) => {
                   setData((prev) => ({
@@ -114,9 +171,7 @@ export default function TestForm({
               />
 
               <TopicSelector
-                topics={(topics || []).filter(
-                  (t) => t.module_id === data.module_id,
-                )}
+                topics={filteredTopics}
                 selectedTopics={data.topics}
                 onChange={(val) => setData("topics", val)}
                 error={errors.topics}

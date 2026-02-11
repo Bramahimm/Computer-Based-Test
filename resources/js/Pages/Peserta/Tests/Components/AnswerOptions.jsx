@@ -1,25 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react'; 
 
-export default function AnswerOptions({ question, selectedAnswer, testUserId, onAnswer }) {
+export default function AnswerOptions({ question, selectedAnswer, testUserId, onAnswer, onFatalError }) {
     const [isSaving, setIsSaving] = useState(false);
+    const NETWORK_TIMEOUT = 6000; // 6 detik untuk deteksi cepat offline/kabel terputus
+
+    const buildErrorMessage = (error) => {
+        const networkHint = "Gagal menyimpan jawaban. Periksa koneksi jaringan atau kabel LAN Anda, lalu coba lagi.";
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            return networkHint;
+        }
+        if (!error?.response || error?.code === "ERR_NETWORK" || error?.code === "ERR_CANCELED") {
+            return networkHint;
+        }
+        return "Gagal menyimpan jawaban. Silakan coba lagi.";
+    };
+
+    const triggerFatalError = (error) => {
+        const message = buildErrorMessage(error);
+        onFatalError?.({ status: 503, message });
+    };
+
+    useEffect(() => {
+        const handleOffline = () => {
+            setIsSaving(false);
+            triggerFatalError();
+        };
+
+        window.addEventListener('offline', handleOffline);
+        return () => window.removeEventListener('offline', handleOffline);
+    }, []);
+
+    const saveAnswer = async (payload) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT);
+
+        try {
+            await axios.post(route('peserta.tests.answer', testUserId), payload, {
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    };
 
     // Logic Pilih Jawaban (TETAP SAMA)
     const handleSelect = async (answerId, answerText) => {
         if (isSaving || selectedAnswer?.answerId === answerId) return;
 
+        const previousAnswer = selectedAnswer ? { ...selectedAnswer } : null;
         onAnswer({ answerId, answerText });
 
         setIsSaving(true);
         try {
-            await axios.post(route('peserta.tests.answer', testUserId), {
+            await saveAnswer({
                 question_id: question.id,
                 answer_id: answerId,
             });
         } catch (error) {
             console.error("Gagal menyimpan jawaban", error);
-            // Alert opsional, bisa dihapus jika mengganggu
+            onAnswer(previousAnswer || null);
+            triggerFatalError(error);
         } finally {
             setIsSaving(false);
         }
@@ -29,17 +71,20 @@ export default function AnswerOptions({ question, selectedAnswer, testUserId, on
     const handleClear = async () => {
         if (isSaving || !selectedAnswer?.answerId) return;
 
+        const previousAnswer = selectedAnswer ? { ...selectedAnswer } : null;
         onAnswer(null);
 
         setIsSaving(true);
         try {
-            await axios.post(route('peserta.tests.answer', testUserId), {
+            await saveAnswer({
                 question_id: question.id,
                 answer_id: null,
                 answer_text: null
             });
         } catch (error) {
             console.error("Gagal menghapus jawaban", error);
+            onAnswer(previousAnswer || null);
+            triggerFatalError(error);
         } finally {
             setIsSaving(false);
         }

@@ -4,35 +4,33 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\Group;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // ADMIN
+        // Hapus semua user lama
+        User::truncate();
+
+        // ADMIN 1
         User::create([
-            'name' => 'Admin CBT',
-            'npm' => '2317051099',
-            'email' => 'admin@fk.unila.ac.id',
-            'password' => Hash::make('password'),
+            'name' => 'Penda Wardani',
+            'npm' => null,
+            'email' => 'penda@fk.unila.ac.id',
+            'password' => Hash::make('penda@123'),
             'role' => 'admin',
             'is_active' => true,
         ]);
 
-        // PESERTA
-        $peserta = User::create([
-            'name' => 'Putra',
-            'npm' => '2317051098',
-            'email' => 'peserta@fk.unila.ac.id',
-            'password' => Hash::make('password'),
-            'role' => 'peserta',
+        // ADMIN 2
+        User::create([
+            'name' => 'Nahrowi',
+            'npm' => null,
+            'email' => 'nahrowi@fk.unila.ac.id',
+            'password' => Hash::make('nahrowi@123'),
+            'role' => 'admin',
             'is_active' => true,
         ]);
-
-        // Assign ke group (angkatan)
-        $group = Group::where('name', 'Angkatan 2024')->first();
-        $peserta->groups()->attach($group->id);
     }
 }

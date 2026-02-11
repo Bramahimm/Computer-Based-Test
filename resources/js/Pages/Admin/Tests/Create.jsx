@@ -2,18 +2,19 @@ import React from "react";
 import { Head, useForm } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import TestForm from "./Components/TestForm";
-import Alert from '@/Components/UI/Alert'; // Sudah benar
+import Alert from '@/Components/UI/Alerts';
 
-export default function Create({ groups, topics }) {
+export default function Create({ groups, topics, modules }) {
   const { data, setData, post, processing, errors } = useForm({
     title: "",
     description: "",
-    duration: 60,
+    duration: 10,
     start_time: "",
     end_time: "",
     is_active: 1,
     groups: [],
     topics: [],
+    module_id: "",
   });
 
   const handleSubmit = (e) => {
@@ -43,6 +44,7 @@ export default function Create({ groups, topics }) {
             processing={processing}
             groups={groups}
             topics={topics}
+            modules={modules}
             submit={handleSubmit}
           />
         </div>

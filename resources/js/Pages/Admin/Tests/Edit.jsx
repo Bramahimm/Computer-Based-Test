@@ -3,8 +3,9 @@ import { Head, useForm } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import TestForm from "./Components/TestForm";
 
-export default function Edit({ test, groups, topics }) {
+export default function Edit({ test, groups, topics, modules }) {
   const formatDT = (str) => (str ? str.replace(" ", "T").substring(0, 16) : "");
+  const initialModuleId = test?.topics?.[0]?.module_id || "";
 
   const { data, setData, put, processing, errors } = useForm({
     title: test.title || "",
@@ -14,6 +15,7 @@ export default function Edit({ test, groups, topics }) {
     end_time: formatDT(test.end_time),
     is_active: test.is_active,
     groups: test.groups ? test.groups.map((g) => g.id) : [],
+    module_id: initialModuleId,
     topics: test.topics
       ? test.topics.map((t) => ({
           id: t.id,
@@ -39,6 +41,7 @@ export default function Edit({ test, groups, topics }) {
           processing={processing}
           groups={groups}
           topics={topics}
+          modules={modules}
           submit={handleSubmit}
           editMode={true}
         />

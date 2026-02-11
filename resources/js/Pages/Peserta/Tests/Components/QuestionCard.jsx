@@ -6,12 +6,12 @@ import EssayInput from './EssayInput';
 import 'katex/dist/katex.min.css';
 import 'react-quill/dist/quill.snow.css';
 
-export default function QuestionCard({ question, selectedAnswer, testUserId, onAnswer }) {
+export default function QuestionCard({ question, selectedAnswer, testUserId, onAnswer, onFatalError }) {
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 animate-fade-in">
             {/* 1. Bagian Soal (Teks & Gambar) */}
             <div className="mb-8">
-                {/* 🔥 GANTI DISINI: Support HTML & Rumus */}
+                
                 <div 
                     className="prose max-w-none text-lg text-gray-800 font-medium leading-relaxed ql-editor"
                     style={{ padding: 0 }} // Reset padding bawaan Quill
@@ -37,6 +37,7 @@ export default function QuestionCard({ question, selectedAnswer, testUserId, onA
                         selectedAnswer={selectedAnswer}
                         testUserId={testUserId}
                         onAnswer={onAnswer}
+                        onFatalError={onFatalError}
                     />
                 ) : (
                     <EssayInput 
@@ -44,6 +45,7 @@ export default function QuestionCard({ question, selectedAnswer, testUserId, onA
                         selectedAnswer={selectedAnswer}
                         testUserId={testUserId}
                         onAnswer={onAnswer}
+                        onFatalError={onFatalError}
                     />
                 )}
             </div>

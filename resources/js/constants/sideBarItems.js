@@ -74,11 +74,11 @@ export const SideBarItems = [
         route: "admin.modules.index",
         params: { section: "questions" },
       },
-      {
-        name: "Jawaban",
-        route: "admin.modules.index",
-        params: { section: "results" },
-      },
+      // {
+      //   name: "Jawaban",
+      //   route: "admin.modules.index",
+      //   params: { section: "results" },
+      // },
       {
         name: "Import Soal",
         route: "admin.modules.index",
