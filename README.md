@@ -53,18 +53,15 @@ Arsitektur mengikuti pola klasik Laravel namun diperkaya service layer domain CB
 
 ```mermaid
 graph TD
-	 A[Browser Admin/Peserta] -->|Inertia request| B[routes/web.php & routes/admin.php]
-	 B --> C[Middleware Stack]
-	 C --> D[Controllers]
-	 D --> E[Services (Analytics/CBT/Statistics)]
-	 E --> F[Models & Eloquent ORM]
-	 F --> G[(Database)]
-	 D --> H[Jobs/Events (opsional)]
-	 F --> I[Storage (gambar soal, PDF, Excel)]
-	 D --> J[Integrasi Eksternal
-		  • Excel Import/Export
-		  • DomPDF
-		  • Sanctum API]
+    A[Browser Admin/Peserta] -->|Inertia request| B[routes/web.php & routes/admin.php]
+    B --> C[Middleware Stack]
+    C --> D[Controllers]
+    D --> E[Services (Analytics/CBT/Statistics)]
+    E --> F[Models & Eloquent ORM]
+    F --> G[(Database)]
+    D --> H[Jobs/Events (opsional)]
+    F --> I[Storage (gambar soal, PDF, Excel)]
+    D --> J[Integrasi Eksternal<br/>- Excel Import/Export<br/>- DomPDF<br/>- Sanctum API]
 ```
 
 **Lapisan Utama**
@@ -225,5 +222,3 @@ sequenceDiagram
 - **Import Excel gagal** – Cek extension `php_zip` & `php_xml`, serta validasi kolom sesuai template.
 - **Timer tidak bergerak** – Periksa timezone server serta endpoint `/api/time` (tanpa middleware Inertia, lihat [routes/web.php](routes/web.php#L31-L44)).
 - **Asset tidak ter-load** – Jalankan `npm run build` lalu `php artisan view:clear`.
-
-
